@@ -70,6 +70,7 @@ const SalaryDashboard = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+        <div className="bg-red-500 text-white p-4 mb-4">Test Tailwind Style</div>
       {/* Header with filters */}
       <header className="bg-white border-b border-gray-200 py-3 px-4 sticky top-0 z-10">
         <div className="container mx-auto flex flex-wrap items-center justify-between">
