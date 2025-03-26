@@ -55,6 +55,14 @@ const SalaryDrDashboard = () => {
   const [subspecialtySearch, setSubspecialtySearch] = useState('');
   const [filteredSubspecialties, setFilteredSubspecialties] = useState([]);
 
+  // Prefetch common specialties on initial load
+  useEffect(() => {
+    const commonSpecialties = ['Internal Medicine', 'Family Medicine', 'Pediatrics'];
+    commonSpecialties.forEach(specialty => {
+      fetchData(specialty); // This will cache the results
+    });
+  }, []);
+
   useEffect(() => {
     fetchData();
   }, [locationFilter, specialtyFilter, practiceType]);
@@ -345,18 +353,58 @@ const SalaryDrDashboard = () => {
       let sortedItems = [...filteredItems];
       const itemsWithDates = sortedItems.filter(item => item.submissionDate);
 
-      if (itemsWithDates.length > 0) {
-        sortedItems = itemsWithDates.sort((a, b) => {
-          const dateA = new Date(a.submissionDate);
-          const dateB = new Date(b.submissionDate);
-          return dateB - dateA;
+      // First filter by practice type if a specific type is selected
+      const practiceTypeFiltered = activeTab === 'overview' 
+        ? itemsWithDates 
+        : itemsWithDates.filter(submission => {
+            const employerType = submission.employerType?.toLowerCase() || '';
+            switch (activeTab) {
+              case 'academic':
+                return employerType === 'academic';
+              case 'hospital':
+                return employerType === 'hospital-employed';
+              case 'private':
+                return employerType === 'private practice';
+              default:
+                return true;
+            }
+          });
+
+      // If we have less than 3 submissions after filtering, get more from older dates
+      if (practiceTypeFiltered.length < 3) {
+        const olderSubmissions = filteredItems.filter(item => {
+          const employerType = item.employerType?.toLowerCase() || '';
+          switch (activeTab) {
+            case 'academic':
+              return employerType === 'academic';
+            case 'hospital':
+              return employerType === 'hospital-employed';
+            case 'private':
+              return employerType === 'private practice';
+            default:
+              return true;
+          }
         });
+        sortedItems = olderSubmissions;
+      } else {
+        sortedItems = practiceTypeFiltered;
       }
 
-      const recentSubmissions = sortedItems.slice(0, 8).map(item => {
+      // Sort by date and take up to 10 items
+      sortedItems = sortedItems.sort((a, b) => {
+        const dateA = new Date(a.submissionDate || '2000-01-01');
+        const dateB = new Date(b.submissionDate || '2000-01-01');
+        return dateB - dateA;
+      }).slice(0, 10);
+
+      const recentSubmissions = sortedItems.map(item => {
         const totalComp = typeof item.totalCompensation === 'string'
           ? Number(item.totalCompensation.replace(/[^0-9.-]+/g, ''))
           : Number(item.totalCompensation || 0);
+
+        const bonusIncentives = typeof item.bonusIncentives === 'string'
+          ? Number(item.bonusIncentives.replace(/[^0-9.-]+/g, ''))
+          : Number(item.bonusIncentives || 0);
 
         let timeAgo = 'Recently';
         if (item.submissionDate) {
@@ -382,7 +430,7 @@ const SalaryDrDashboard = () => {
         const practiceSetting = item.practiceSetting?.toLowerCase() || '';
         let normalizedPracticeSetting;
         
-        if (practiceSetting === 'academic') {
+        if (practiceSetting === 'academic' || practiceSetting === 'academic medicine') {
           normalizedPracticeSetting = 'Academic';
         } else if (['hospital employed', 'hospital-employed', 'hospital'].includes(practiceSetting)) {
           normalizedPracticeSetting = 'Hospital-Employed';
@@ -408,7 +456,7 @@ const SalaryDrDashboard = () => {
           productivity: item.productivityModel || 'Salary',
           submissionDate: item.submissionDate || '',
           satisfaction: item.satisfactionLevel || 0,
-          bonus: item.bonusIncentives || 0,
+          bonusIncentives: bonusIncentives,
           wouldChooseAgain: item.chooseSpecialtyAgain === 'Yes'
         };
       });
@@ -513,7 +561,7 @@ const SalaryDrDashboard = () => {
             productivity: 'Productivity ($100/wRVU)',
             submissionDate: '2025-03-18',
             satisfaction: 4.2,
-            bonus: 50000,
+            bonusIncentives: 50000,
             wouldChooseAgain: true
           },
           {
@@ -869,6 +917,20 @@ const SalaryDrDashboard = () => {
       };
 
       const analyzeWithData = (relevantData, userComp, userYears) => {
+        // Determine career stage first
+        let careerStage = 'Mid Career';
+        if (userYears < 5) careerStage = 'Early Career';
+        else if (userYears >= 15) careerStage = 'Late Career';
+
+        // Calculate stage-specific data
+        const stageData = relevantData.filter(item => {
+          const years = parseInt(item.yearsOfExperience) || 0;
+          if (careerStage === 'Early Career') return years < 5;
+          if (careerStage === 'Mid Career') return years >= 5 && years < 15;
+          return years >= 15;
+        });
+
+        // Filter valid compensation data
         const comps = relevantData
           .map(item => {
             const comp = typeof item.totalCompensation === 'string'
@@ -877,23 +939,6 @@ const SalaryDrDashboard = () => {
             return !isNaN(comp) && comp > 0 ? comp : null;
           })
           .filter(Boolean);
-
-        const avgComp = Math.round(comps.reduce((a, b) => a + b, 0) / comps.length);
-        const sortedComps = [...comps].sort((a, b) => a - b);
-        const userPercentile = Math.round((sortedComps.filter(comp => comp <= userComp).length / sortedComps.length) * 100);
-
-        // Determine career stage
-        let careerStage = 'Mid Career';
-        if (userYears < 5) careerStage = 'Early Career';
-        else if (userYears >= 15) careerStage = 'Late Career';
-
-        // Calculate stage-specific average
-        const stageData = relevantData.filter(item => {
-          const years = parseInt(item.yearsOfExperience) || 0;
-          if (careerStage === 'Early Career') return years < 5;
-          if (careerStage === 'Mid Career') return years >= 5 && years < 15;
-          return years >= 15;
-        });
 
         const stageComps = stageData
           .map(item => {
@@ -904,6 +949,12 @@ const SalaryDrDashboard = () => {
           })
           .filter(Boolean);
 
+        const avgComp = Math.round(comps.reduce((a, b) => a + b, 0) / comps.length);
+        const sortedComps = [...comps].sort((a, b) => a - b);
+        const calculatedPercentile = Math.round((sortedComps.filter(comp => comp <= userComp).length / sortedComps.length) * 100);
+        const userPercentile = calculatedPercentile < 10 ? "Bottom" : calculatedPercentile;
+
+        // Use stage-specific average if we have enough data, otherwise use overall average
         const stageAvgComp = stageComps.length >= 3
           ? Math.round(stageComps.reduce((sum, comp) => sum + comp, 0) / stageComps.length)
           : avgComp;
@@ -951,7 +1002,10 @@ const SalaryDrDashboard = () => {
           feedback,
           careerStage,
           totalComparisons: comps.length,
-          stageComparisons: stageComps.length
+          stageComparisons: stageComps.length,
+          comparisonText: stageComps.length >= 3 
+            ? `${stageComps.length} ${careerStage}`
+            : `${comps.length}`
         });
       };
 
@@ -1220,20 +1274,17 @@ const SalaryDrDashboard = () => {
                     .filter(submission => {
                       if (activeTab === 'overview') return true;
                       
+                      const employerType = submission.employerType?.toLowerCase() || '';
                       switch (activeTab) {
                         case 'academic':
-                          return submission.employerType === 'Academic';
+                          return employerType === 'academic';
                         case 'hospital':
-                          return submission.employerType === 'Hospital-Employed';
+                          return employerType === 'hospital-employed';
                         case 'private':
-                          return submission.employerType === 'Private Practice';
+                          return employerType === 'private practice';
                         default:
                           return true;
                       }
-                    })
-                    .filter(submission => {
-                      if (specialtyFilter === 'All Physicians') return true;
-                      return submission.specialty?.toLowerCase() === specialtyFilter.toLowerCase();
                     })
                     .map((submission) => (
                       <React.Fragment key={submission.id}>
@@ -1275,7 +1326,10 @@ const SalaryDrDashboard = () => {
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-gray-700">Would Choose Again:</p>
-                                  <p className="text-sm text-gray-900">{submission.wouldChooseAgain ? 'Yes' : 'No'}</p>
+                                  <p className="text-sm text-gray-900">
+                                    {submission.wouldChooseAgain === true ? 'Yes' : 
+                                     submission.wouldChooseAgain === false ? 'No' : 'N/A'}
+                                  </p>
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-gray-700">Hours Worked:</p>
@@ -1421,7 +1475,12 @@ const SalaryDrDashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto mt-12">
-        <h2 className="text-3xl font-bold text-center mb-8">Salary Comparison Tool</h2>
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <h2 className="text-3xl font-bold text-center">Salary Comparison Tool</h2>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+            BETA
+          </span>
+        </div>
         <div className="bg-white shadow-md rounded-lg p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Input Form */}
@@ -1534,7 +1593,7 @@ const SalaryDrDashboard = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Percentile:</span>
                       <span className="text-xl font-bold text-gray-900">
-                        {comparisonResult.percentile}th
+                        {typeof comparisonResult.percentile === 'number' ? `${comparisonResult.percentile}th` : comparisonResult.percentile}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -1547,7 +1606,7 @@ const SalaryDrDashboard = () => {
                       <p className="text-gray-700">{comparisonResult.feedback}</p>
                     </div>
                     <div className="text-sm text-gray-500">
-                      Based on {comparisonResult.stageComparisons} {comparisonResult.careerStage} physicians in your specialty
+                      Based on {comparisonResult.comparisonText} {comparisonResult.stageComparisons >= 3 ? "physicians" : "total physicians"} in your specialty
                       {userInput.location && ` in ${userInput.location}`}
                       {userInput.practiceSetting && ` working in ${userInput.practiceSetting}`}
                     </div>
