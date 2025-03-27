@@ -4,8 +4,13 @@ import React from 'react';
 import { createClient, OAuthStrategy } from '@wix/sdk';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 
-// Get your client ID from .env
+// Get environment variables
 const clientId = process.env.REACT_APP_WIX_CLIENT_ID;
+const redirectUrl = process.env.REACT_APP_WIX_REDIRECT_URL;
+
+if (!clientId || !redirectUrl) {
+  throw new Error('Missing required environment variables. Please set REACT_APP_WIX_CLIENT_ID and REACT_APP_WIX_REDIRECT_URL.');
+}
 
 // Function to handle login
 function initiateLogin() {
@@ -13,10 +18,9 @@ function initiateLogin() {
     auth: OAuthStrategy({ clientId })
   });
   
-  // This will redirect to Wix's login page
+  // Use environment variable for redirect URL
   client.auth.logIn({
-    // This should match the redirect URI you set in Wix
-    redirectUrl: 'http://localhost:3000/callback'
+    redirectUrl
   });
 }
 

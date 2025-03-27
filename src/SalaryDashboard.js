@@ -166,15 +166,9 @@ const SalaryDrDashboard = () => {
           setError(null);
         } else {
           setError('No salary data available from the CMS');
-          if (process.env.NODE_ENV === 'development') {
-            loadSampleData();
-          }
         }
       } catch (err) {
         setError(`Failed to load data: ${err.message}`);
-        if (process.env.NODE_ENV === 'development') {
-          loadSampleData();
-        }
       } finally {
         setLoading(false);
       }
@@ -510,223 +504,7 @@ const SalaryDrDashboard = () => {
         avgRVUCount: Math.round(avgRVUCount) || 0
       });
     };
-    const loadSampleData = () => {
-        const sampleSpecialtyOptions = [
-          'Cardiology',
-          'Cardiology - Interventional',
-          'Cardiology - Non-Invasive',
-          'Dermatology',
-          'Emergency Medicine',
-          'Family Medicine',
-          'Gastroenterology',
-          'General Surgery',
-          'General Surgery - MIS',
-          'Internal Medicine',
-          'Neurology',
-          'Neurosurgery',
-          'Obstetrics & Gynecology',
-          'Oncology',
-          'Ophthalmology',
-          'Orthopedics',
-          'Otolaryngology',
-          'Pediatrics',
-          'Psychiatry',
-          'Radiology',
-          'Urology'
-        ];
-        
-        setSpecialtyOptions(sampleSpecialtyOptions);
-    
-        setSalaryDistribution([
-          { name: 'p10th', value: 383000, label: '$383K' },
-          { name: 'p25th', value: 483000, label: '$483K' },
-          { name: 'p50th', value: 564000, label: '$564K' },
-          { name: 'p75th', value: 620000, label: '$620K' },
-          { name: 'p90th', value: 825000, label: '$825K' }
-        ]);
-    
-        setRecentSubmissions([
-          {
-            id: 1,
-            timeAgo: '1d ago',
-            specialty: 'Cardiology',
-            subspecialty: 'Interventional',
-            yearsOfExperience: 4,
-            location: 'New York, NY',
-            employer: 'Academic Medical Center',
-            employerType: 'Academic',
-            workload: '55 hrs/week',
-            pto: '4 wks',
-            compensation: 645000,
-            productivity: 'Productivity ($100/wRVU)',
-            submissionDate: '2025-03-18',
-            satisfaction: 4.2,
-            bonusIncentives: 50000,
-            wouldChooseAgain: true
-          },
-          {
-            id: 2,
-            timeAgo: '3d ago',
-            specialty: 'Orthopedics',
-            subspecialty: 'Non-Invasive',
-            yearsOfExperience: 8,
-            location: 'Chicago, IL',
-            employer: 'Northwestern Memorial',
-            employerType: 'Hospital-Employed',
-            workload: '48 hrs/week',
-            pto: '6 wks',
-            compensation: 535000,
-            productivity: 'Salary + RVU Bonus',
-            submissionDate: '2025-03-15',
-            satisfaction: 3.8,
-            bonus: 30000,
-            wouldChooseAgain: false
-          },
-          {
-            id: 3,
-            timeAgo: '1w ago',
-            specialty: 'Neurology',
-            subspecialty: 'Electrophysiology',
-            yearsOfExperience: 12,
-            location: 'Austin, TX',
-            employer: 'Heart Specialists of Texas',
-            employerType: 'Private Practice',
-            workload: '52 hrs/week',
-            pto: '4 wks',
-            compensation: 820000,
-            productivity: 'Partnership Track',
-            submissionDate: '2025-03-12',
-            satisfaction: 4.5,
-            bonus: 75000,
-            wouldChooseAgain: true
-          },
-          {
-            id: 4,
-            timeAgo: '2w ago',
-            specialty: 'Pediatrics',
-            subspecialty: 'General',
-            yearsOfExperience: 6,
-            location: 'Boston, MA',
-            employer: 'Boston General',
-            employerType: 'Hospital-Employed',
-            workload: '50 hrs/week',
-            pto: '5 wks',
-            compensation: 590000,
-            productivity: 'Salary',
-            submissionDate: '2025-03-05',
-            satisfaction: 4.0,
-            bonus: 20000,
-            wouldChooseAgain: true
-          },
-          {
-            id: 5,
-            timeAgo: '3w ago',
-            specialty: 'Anesthesiology',
-            subspecialty: 'Pediatric',
-            yearsOfExperience: 10,
-            location: 'Seattle, WA',
-            employer: 'Seattle Children\'s',
-            employerType: 'Academic',
-            workload: '45 hrs/week',
-            pto: '4 wks',
-            compensation: 510000,
-            productivity: 'Salary',
-            submissionDate: '2025-02-28',
-            satisfaction: 3.9,
-            bonus: 15000,
-            wouldChooseAgain: false
-          },
-          {
-            id: 6,
-            timeAgo: '1mo ago',
-            specialty: 'Dermatology',
-            subspecialty: 'General',
-            yearsOfExperience: 5,
-            location: 'Miami, FL',
-            employer: 'Miami Skin Clinic',
-            employerType: 'Private Practice',
-            workload: '40 hrs/week',
-            pto: '5 wks',
-            compensation: 700000,
-            productivity: 'Partnership Track',
-            submissionDate: '2025-02-15',
-            satisfaction: 4.7,
-            bonus: 80000,
-            wouldChooseAgain: true
-          },
-          {
-            id: 7,
-            timeAgo: '2mo ago',
-            specialty: 'Radiology',
-            subspecialty: 'Diagnostic',
-            yearsOfExperience: 9,
-            location: 'Los Angeles, CA',
-            employer: 'LA Imaging Center',
-            employerType: 'Hospital-Employed',
-            workload: '48 hrs/week',
-            pto: '4 wks',
-            compensation: 620000,
-            productivity: 'Salary + RVU Bonus',
-            submissionDate: '2025-01-20',
-            satisfaction: 4.1,
-            bonus: 40000,
-            wouldChooseAgain: true
-          },
-          {
-            id: 8,
-            timeAgo: '3mo ago',
-            specialty: 'Gastroenterology',
-            subspecialty: 'General',
-            yearsOfExperience: 7,
-            location: 'Houston, TX',
-            employer: 'Houston Digestive Health',
-            employerType: 'Private Practice',
-            workload: '50 hrs/week',
-            pto: '4 wks',
-            compensation: 680000,
-            productivity: 'Partnership Track',
-            submissionDate: '2024-12-10',
-            satisfaction: 4.3,
-            bonus: 60000,
-            wouldChooseAgain: true
-          }
-        ]);
-    
-        setComparisonData([
-          {
-            type: 'Academic',
-            avgComp: 498000,
-            submissions: 559
-          },
-          {
-            type: 'Hospital Employed',
-            avgComp: 540327,
-            submissions: 782
-          },
-          {
-            type: 'Private Practice',
-            avgComp: 597000,
-            submissions: 962
-          }
-        ]);
-    
-        setAggregatedStats({
-          averageSalary: 500419,
-          totalSubmissions: 2303,
-          base: 418201,
-          bonuses: 83741,
-          bonusesPercentage: 98,
-          otherIncome: 10000,
-          otherIncomePercentage: 12,
-          workload: 48.4,
-          satisfaction: 4.1,
-          satisfactionPercentage: 78,
-          updateDate: 'Mar 21, 2025',
-          avgRVU: 83.21,
-          avgRVUCount: 4738
-        });
-      };
-    
+
       const formatCurrency = (value) => {
         return new Intl.NumberFormat('en-US', {
           style: 'currency',
@@ -1639,7 +1417,7 @@ const SalaryDrDashboard = () => {
               onClick={() => toggleFAQ(0)}
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-indigo-900">How is this salary data collected?</h3>
+                <h3 className="text-lg font-semibold text-indigo-900">Why is salary transparency so important for doctors?</h3>
                 <svg
                   className={`w-6 h-6 transform ${openFAQIndex === 0 ? 'rotate-180' : ''}`}
                   fill="none"
@@ -1652,7 +1430,7 @@ const SalaryDrDashboard = () => {
             </button>
             {openFAQIndex === 0 && (
               <div className="px-6 pb-4 text-left">
-                <p className="text-gray-600">Our salary data is collected through anonymous submissions from verified physicians across the United States. Each submission is reviewed for accuracy and completeness before being added to our database.</p>
+                <p className="text-gray-600">Salary transparency is crucial for physicians because it helps level the playing field in contract negotiations and ensures fair compensation across different practice settings. With the rising costs of medical education and increasing administrative burdens, doctors need reliable salary data to make informed career decisions and advocate for equitable compensation that reflects their expertise, training, and dedication to patient care.</p>
               </div>
             )}
           </div>
@@ -1663,7 +1441,7 @@ const SalaryDrDashboard = () => {
               onClick={() => toggleFAQ(1)}
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-indigo-900">Is my salary information kept confidential?</h3>
+                <h3 className="text-lg font-semibold text-indigo-900">How is this salary data collected?</h3>
                 <svg
                   className={`w-6 h-6 transform ${openFAQIndex === 1 ? 'rotate-180' : ''}`}
                   fill="none"
@@ -1676,7 +1454,7 @@ const SalaryDrDashboard = () => {
             </button>
             {openFAQIndex === 1 && (
               <div className="px-6 pb-4 text-left">
-                <p className="text-gray-600">Yes, all salary submissions are completely anonymous. We never collect or store any personally identifiable information with salary submissions.</p>
+                <p className="text-gray-600">Our salary data is collected through anonymous submissions from verified physicians across the United States. Each submission is reviewed for accuracy and completeness before being added to our database.</p>
               </div>
             )}
           </div>
@@ -1687,7 +1465,7 @@ const SalaryDrDashboard = () => {
               onClick={() => toggleFAQ(2)}
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-indigo-900">How often is the data updated?</h3>
+                <h3 className="text-lg font-semibold text-indigo-900">Is my salary information kept confidential?</h3>
                 <svg
                   className={`w-6 h-6 transform ${openFAQIndex === 2 ? 'rotate-180' : ''}`}
                   fill="none"
@@ -1700,7 +1478,7 @@ const SalaryDrDashboard = () => {
             </button>
             {openFAQIndex === 2 && (
               <div className="px-6 pb-4 text-left">
-                <p className="text-gray-600">Our salary database is updated in real-time as new submissions are received and verified. The statistics and averages are recalculated daily.</p>
+                <p className="text-gray-600">Yes, all salary submissions are completely anonymous. We never collect or store any personally identifiable information with salary submissions.</p>
               </div>
             )}
           </div>
@@ -1711,7 +1489,7 @@ const SalaryDrDashboard = () => {
               onClick={() => toggleFAQ(3)}
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-indigo-900">How can I use this data in contract negotiations?</h3>
+                <h3 className="text-lg font-semibold text-indigo-900">How often is the data updated?</h3>
                 <svg
                   className={`w-6 h-6 transform ${openFAQIndex === 3 ? 'rotate-180' : ''}`}
                   fill="none"
@@ -1724,7 +1502,7 @@ const SalaryDrDashboard = () => {
             </button>
             {openFAQIndex === 3 && (
               <div className="px-6 pb-4 text-left">
-                <p className="text-gray-600">Our detailed salary breakdowns by specialty, location, and practice type can serve as valuable benchmarks during contract negotiations. Use the percentile data to understand your market value and negotiate fair compensation.</p>
+                <p className="text-gray-600">Our salary database is updated in real-time as new submissions are received and verified. The statistics and averages are recalculated daily.</p>
               </div>
             )}
           </div>
@@ -1735,7 +1513,7 @@ const SalaryDrDashboard = () => {
               onClick={() => toggleFAQ(4)}
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-indigo-900">Want to get in touch?</h3>
+                <h3 className="text-lg font-semibold text-indigo-900">How can I use this data in contract negotiations?</h3>
                 <svg
                   className={`w-6 h-6 transform ${openFAQIndex === 4 ? 'rotate-180' : ''}`}
                   fill="none"
@@ -1747,6 +1525,30 @@ const SalaryDrDashboard = () => {
               </div>
             </button>
             {openFAQIndex === 4 && (
+              <div className="px-6 pb-4 text-left">
+                <p className="text-gray-600">Our detailed salary breakdowns by specialty, location, and practice type can serve as valuable benchmarks during contract negotiations. Use the percentile data to understand your market value and negotiate fair compensation.</p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white shadow-md rounded-lg">
+            <button
+              className="w-full px-6 py-4 text-left focus:outline-none"
+              onClick={() => toggleFAQ(5)}
+            >
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-indigo-900">Want to get in touch?</h3>
+                <svg
+                  className={`w-6 h-6 transform ${openFAQIndex === 5 ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
+            {openFAQIndex === 5 && (
               <div className="px-6 pb-4 text-left">
                 <p className="text-gray-600">You can reach us at <a href="mailto:thesalarydr@gmail.com" className="text-indigo-600 hover:text-indigo-800">thesalarydr@gmail.com</a></p>
               </div>
