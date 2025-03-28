@@ -80,189 +80,6 @@ const SalaryDrDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [locationFilter, specialtyFilter, practiceType, currentPage]);
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const filters = {
-        specialty: specialtyFilter,
-        practiceType,
-        locationFilter,
-        currentPage
-      };
-      console.log('Starting data fetch with filters:', JSON.stringify(filters, null, 2));
-
-      // First try a simple query without filters to verify data access
-      const testQuery = await supabase
-        .from('salary_submissions')
-        .select('count');
-      
-      console.log('Initial count query result:', JSON.stringify(testQuery.data, null, 2));
-
-      // Build query with proper error handling
-      let query = supabase
-        .from('salary_submissions')
-        .select('*', { count: 'exact' });
-
-      // Only apply filters if they're not set to "All"
-      if (specialtyFilter && specialtyFilter !== 'All Physicians') {
-        console.log('Applying specialty filter:', specialtyFilter);
-        query = query.ilike('specialty', specialtyFilter);
-      }
-      
-      if (practiceType && practiceType !== 'All Practice Types') {
-        console.log('Applying practice type filter:', practiceType);
-        if (practiceType === 'Hospital Employed') {
-          query = query.or('practice_setting.eq.Hospital Employed,practice_setting.eq.Hospital-Employed,practice_setting.eq.Hospital');
-        } else {
-          query = query.eq('practice_setting', practiceType);
-        }
-      }
-      
-      if (locationFilter && locationFilter !== 'All Regions') {
-        console.log('Applying location filter:', locationFilter);
-        query = query.eq('geographic_location', locationFilter);
-      }
-
-      // Add pagination
-      query = query
-        .range((currentPage - 1) * 50, currentPage * 50 - 1)
-        .order('created_date', { ascending: false });
-
-      console.log('Executing final query...');
-      const { data, error, count } = await query;
-
-      if (error) {
-        console.error('Supabase query error:', error);
-        throw error;
-      }
-
-      console.log('Query successful. Records found:', data?.length);
-      console.log('Sample record:', JSON.stringify(data?.[0], null, 2));
-      console.log('Total count:', count);
-
-      // Transform the data
-      const parseCurrency = (value) => {
-        if (!value) return 0;
-        // Remove $ and commas, then convert to float
-        return parseFloat(value.replace(/[$,]/g, '')) || 0;
-      };
-
-      const transformedData = data.map(item => ({
-        id: item.id,
-        salary: parseCurrency(item.total_compensation) || parseCurrency(item.base_salary) || 0,
-        specialty: item.specialty,
-        subspecialty: item.subspecialty,
-        practiceType: item.practice_setting,
-        location: item.geographic_location,
-        employerType: item.practice_setting,
-        bonusIncentives: parseCurrency(item.bonus_incentives) || 0,
-        wouldChooseAgain: item.choosespecialty,
-        submissionDate: item.created_date,
-        yearsOfExperience: item.years_of_experience,
-        hoursWorkedPerWeek: item.hours_worked,
-        paidTimeOff: item.benefits,
-        productivityModel: item.rvu_bonus_structure,
-        satisfactionLevel: parseFloat(item.satisfaction_level) || 0,
-        city: item.city,
-        state: item.state,
-        callSchedule: item.call_schedule,
-        rvuTarget: item.rvu_target,
-        rvuRate: item.rvu_rate,
-        actualRVU: item.actual_rvu_production,
-        productionBonus: parseCurrency(item.production_bonus) || 0,
-        negotiationStatus: item.negotiation_status
-      }));
-
-      console.log('Data transformation complete. Sample transformed record:', JSON.stringify(transformedData[0], null, 2));
-      console.log('Sample original record fields:', Object.keys(data[0]));
-      console.log('Sample original record values:', JSON.stringify(data[0], null, 2));
-
-      // Update state
-      setSalaryData(transformedData);
-      setTotalPages(Math.ceil(count / 50));
-      
-      // Process recent submissions
-      const recentSubmissions = transformedData
-        .slice(0, 10)
-        .map(item => ({
-          id: item.id,
-          timeAgo: formatTimeAgo(new Date(item.submissionDate)),
-          specialty: item.specialty,
-          location: `${item.city}, ${item.state}`,
-          compensation: item.salary,
-          bonusIncentives: item.bonusIncentives,
-          wouldChooseAgain: item.wouldChooseAgain,
-          satisfactionLevel: item.satisfactionLevel
-        }));
-
-      setRecentSubmissions(recentSubmissions);
-      processData(transformedData);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err.message || 'Failed to fetch data');
-      setSalaryData([]);
-      setRecentSubmissions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Add useEffect for data fetching with debouncing
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      fetchData();
-    }, 300); // 300ms debounce
-
-    return () => clearTimeout(debounceTimer);
-  }, [selectedSpecialties, practiceType, locationFilter, currentPage]);
-
-  // Add loading and error states to the UI
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-          <p className="text-gray-700">Loading salary data...</p>
-          <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center max-w-lg mx-auto">
-          <div className="text-red-500 mb-4">
-            <svg className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading data</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <div className="text-sm text-gray-500 mb-4">
-            Please check your connection and try again. If the problem persists, contact support.
-          </div>
-          <button 
-            onClick={() => {
-              setError(null);
-              setIsLoading(false);
-              fetchData();
-            }}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const processData = (items) => {
     if (!items || items.length === 0) {
       return;
@@ -291,20 +108,13 @@ const SalaryDrDashboard = () => {
 
     const validCompItems = filteredItems.filter(item => {
       const comp = item.totalCompensation;
-      const parsed = typeof comp === 'string'
-        ? Number(comp.replace(/[^0-9.-]+/g, ''))
-        : Number(comp || 0);
-      return !isNaN(parsed) && parsed > 0;
+      return !isNaN(comp) && comp > 0;
     });
 
     let avgTotalComp = 0;
     if (validCompItems.length > 0) {
       const totalComp = validCompItems.reduce((sum, item) => {
-        const comp = item.totalCompensation;
-        const parsed = typeof comp === 'string'
-          ? Number(comp.replace(/[^0-9.-]+/g, ''))
-          : Number(comp || 0);
-        return sum + parsed;
+        return sum + item.totalCompensation;
       }, 0);
 
       avgTotalComp = Math.round(totalComp / validCompItems.length);
@@ -320,28 +130,19 @@ const SalaryDrDashboard = () => {
     let workloadCount = 0;
 
     filteredItems.forEach(item => {
-      const baseSalary = typeof item.baseSalary === 'string'
-        ? Number(item.baseSalary.replace(/[^0-9.-]+/g, ''))
-        : Number(item.baseSalary || 0);
-
+      const baseSalary = item.baseSalary;
       if (!isNaN(baseSalary) && baseSalary > 0) {
         totalBase += baseSalary;
         baseCount++;
       }
 
-      const bonus = typeof item.bonusIncentives === 'string'
-        ? Number(item.bonusIncentives.replace(/[^0-9.-]+/g, ''))
-        : Number(item.bonusIncentives || 0);
-
+      const bonus = item.bonusIncentives;
       if (!isNaN(bonus) && bonus > 0) {
         totalBonuses += bonus;
         bonusCount++;
       }
 
-      const totalComp = typeof item.totalCompensation === 'string'
-        ? Number(item.totalCompensation.replace(/[^0-9.-]+/g, ''))
-        : Number(item.totalCompensation || 0);
-
+      const totalComp = item.totalCompensation;
       if (!isNaN(totalComp) && totalComp > 0 && !isNaN(baseSalary) && !isNaN(bonus)) {
         const otherIncome = totalComp - baseSalary - bonus;
         if (otherIncome > 0) {
@@ -357,12 +158,9 @@ const SalaryDrDashboard = () => {
       }
     });
 
-    const compensationValues = validCompItems.map(item => {
-      const comp = item.totalCompensation;
-      return typeof comp === 'string'
-        ? Number(comp.replace(/[^0-9.-]+/g, ''))
-        : Number(comp || 0);
-    }).filter(val => !isNaN(val) && val > 0)
+    const compensationValues = validCompItems
+      .map(item => item.totalCompensation)
+      .filter(val => !isNaN(val) && val > 0)
       .sort((a, b) => a - b);
 
     const percentiles = [];
@@ -593,6 +391,209 @@ const SalaryDrDashboard = () => {
       avgRVUCount: Math.round(avgRVUCount) || 0
     });
   };
+
+  useEffect(() => {
+    fetchData();
+  }, [locationFilter, specialtyFilter, practiceType, currentPage]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const filters = {
+        specialty: specialtyFilter,
+        practiceType,
+        locationFilter,
+        currentPage
+      };
+      console.log('Starting data fetch with filters:', JSON.stringify(filters, null, 2));
+
+      // First try a simple query without filters to verify data access
+      const testQuery = await supabase
+        .from('salary_submissions')
+        .select('count');
+      
+      console.log('Initial count query result:', JSON.stringify(testQuery.data, null, 2));
+
+      // Build query with proper error handling
+      let query = supabase
+        .from('salary_submissions')
+        .select('*', { count: 'exact' });
+
+      // Only apply filters if they're not set to "All"
+      if (specialtyFilter && specialtyFilter !== 'All Physicians') {
+        console.log('Applying specialty filter:', specialtyFilter);
+        query = query.ilike('specialty', specialtyFilter);
+      }
+      
+      if (practiceType && practiceType !== 'All Practice Types') {
+        console.log('Applying practice type filter:', practiceType);
+        if (practiceType === 'Hospital Employed') {
+          query = query.or('practice_setting.eq.Hospital Employed,practice_setting.eq.Hospital-Employed,practice_setting.eq.Hospital');
+        } else {
+          query = query.eq('practice_setting', practiceType);
+        }
+      }
+      
+      if (locationFilter && locationFilter !== 'All Regions') {
+        console.log('Applying location filter:', locationFilter);
+        query = query.eq('geographic_location', locationFilter);
+      }
+
+      // Add pagination
+      query = query
+        .range((currentPage - 1) * 50, currentPage * 50 - 1)
+        .order('created_date', { ascending: false });
+
+      console.log('Executing final query...');
+      const { data, error, count } = await query;
+
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
+
+      console.log('Query successful. Records found:', data?.length);
+      console.log('Sample record:', JSON.stringify(data?.[0], null, 2));
+      console.log('Total count:', count);
+
+      // Transform the data
+      const parseCurrency = (value) => {
+        if (!value) return 0;
+        // If value is already a number, return it
+        if (typeof value === 'number') return value;
+        // If it's a string, remove $ and commas
+        if (typeof value === 'string') {
+          return parseFloat(value.replace(/[$,]/g, '')) || 0;
+        }
+        return 0;
+      };
+
+      const transformedData = data.map(item => ({
+        id: item.id,
+        salary: parseCurrency(item.total_compensation) || parseCurrency(item.base_salary) || 0,
+        specialty: item.specialty,
+        subspecialty: item.subspecialty,
+        practiceType: item.practice_setting,
+        location: item.city ? `${item.city}, ${item.state}` : item.state,
+        employerType: (() => {
+          const setting = (item.practice_setting || '').toLowerCase();
+          if (setting === 'academic' || setting === 'academic medicine') {
+            return 'Academic';
+          } else if (['hospital employed', 'hospital-employed', 'hospital'].includes(setting)) {
+            return 'Hospital Employed';
+          } else if (['private practice', 'private'].includes(setting)) {
+            return 'Private Practice';
+          }
+          return 'Unknown';
+        })(),
+        bonusIncentives: parseCurrency(item.bonus_incentives) || 0,
+        wouldChooseAgain: item.choosespecialty,
+        submissionDate: item.created_date,
+        yearsOfExperience: item.years_of_experience,
+        hoursWorkedPerWeek: item.hours_worked,
+        paidTimeOff: item.benefits,
+        productivityModel: item.rvu_bonus_structure,
+        satisfactionLevel: parseFloat(item.satisfaction_level) || 0,
+        city: item.city,
+        state: item.state,
+        callSchedule: item.call_schedule,
+        rvuTarget: item.rvu_target,
+        rvuRate: item.rvu_rate,
+        actualRVU: item.actual_rvu_production,
+        productionBonus: parseCurrency(item.production_bonus) || 0,
+        negotiationStatus: item.negotiation_status,
+        totalCompensation: parseCurrency(item.total_compensation) || 0,
+        baseSalary: parseCurrency(item.base_salary) || 0
+      }));
+
+      console.log('Data transformation complete. Sample transformed record:', JSON.stringify(transformedData[0], null, 2));
+      console.log('Sample original record fields:', Object.keys(data[0]));
+      console.log('Sample original record values:', JSON.stringify(data[0], null, 2));
+
+      // Update state
+      setSalaryData(transformedData);
+      setTotalPages(Math.ceil(count / 50));
+      
+      // Process recent submissions
+      const recentSubmissions = transformedData
+        .slice(0, 10)
+        .map(item => ({
+          id: item.id,
+          timeAgo: formatTimeAgo(new Date(item.submissionDate)),
+          specialty: item.specialty,
+          subspecialty: item.subspecialty || '',
+          location: item.location,
+          employerType: item.employerType,
+          compensation: item.totalCompensation,
+          bonusIncentives: item.bonusIncentives,
+          wouldChooseAgain: item.wouldChooseAgain,
+          satisfactionLevel: item.satisfactionLevel,
+          yearsOfExperience: item.yearsOfExperience
+        }));
+
+      setRecentSubmissions(recentSubmissions);
+      processData(transformedData);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err.message || 'Failed to fetch data');
+      setSalaryData([]);
+      setRecentSubmissions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add useEffect for data fetching with debouncing
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      fetchData();
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(debounceTimer);
+  }, [selectedSpecialties, practiceType, locationFilter, currentPage]);
+
+  // Add loading and error states to the UI
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-gray-700">Loading salary data...</p>
+          <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center max-w-lg mx-auto">
+          <div className="text-red-500 mb-4">
+            <svg className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading data</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="text-sm text-gray-500 mb-4">
+            Please check your connection and try again. If the problem persists, contact support.
+          </div>
+          <button 
+            onClick={() => {
+              setError(null);
+              setIsLoading(false);
+              fetchData();
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
     const formatCurrency = (value) => {
       return new Intl.NumberFormat('en-US', {
