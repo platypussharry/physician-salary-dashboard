@@ -13,7 +13,7 @@ const SalaryDrDashboard = () => {
   const [openFAQIndex, setOpenFAQIndex] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
   const [salaryData, setSalaryData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [comparisonType, setComparisonType] = useState('specialties');
   const [selectedSpecialties, setSelectedSpecialties] = useState([]);
@@ -57,7 +57,6 @@ const SalaryDrDashboard = () => {
   const [filteredSubspecialties, setFilteredSubspecialties] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
 
   // Add formatTimeAgo function
   const formatTimeAgo = (date) => {
@@ -83,68 +82,105 @@ const SalaryDrDashboard = () => {
 
   useEffect(() => {
     fetchData();
-  }, [locationFilter, specialtyFilter, practiceType]);
+  }, [locationFilter, specialtyFilter, practiceType, currentPage]);
 
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Build query filters
+      const filters = {
+        specialty: specialtyFilter,
+        practiceType,
+        locationFilter,
+        currentPage
+      };
+      console.log('Starting data fetch with filters:', JSON.stringify(filters, null, 2));
+
+      // First try a simple query without filters to verify data access
+      const testQuery = await supabase
+        .from('salary_submissions')
+        .select('count');
+      
+      console.log('Initial count query result:', JSON.stringify(testQuery.data, null, 2));
+
+      // Build query with proper error handling
       let query = supabase
         .from('salary_submissions')
-        .select('*', { count: 'exact' })
+        .select('*', { count: 'exact' });
+
+      // Only apply filters if they're not set to "All"
+      if (specialtyFilter && specialtyFilter !== 'All Physicians') {
+        console.log('Applying specialty filter:', specialtyFilter);
+        query = query.ilike('specialty', specialtyFilter);
+      }
+      
+      if (practiceType && practiceType !== 'All Practice Types') {
+        console.log('Applying practice type filter:', practiceType);
+        if (practiceType === 'Hospital Employed') {
+          query = query.or('practice_setting.eq.Hospital Employed,practice_setting.eq.Hospital-Employed,practice_setting.eq.Hospital');
+        } else {
+          query = query.eq('practice_setting', practiceType);
+        }
+      }
+      
+      if (locationFilter && locationFilter !== 'All Regions') {
+        console.log('Applying location filter:', locationFilter);
+        query = query.eq('geographic_location', locationFilter);
+      }
+
+      // Add pagination
+      query = query
         .range((currentPage - 1) * 50, currentPage * 50 - 1)
         .order('created_date', { ascending: false });
 
-      // Apply filters
-      if (selectedSpecialties) {
-        query = query.eq('Specialty', selectedSpecialties);
-      }
-      if (practiceType && practiceType !== 'All Practice Types') {
-        if (practiceType === 'Hospital Employed') {
-          query = query.in('Practice_Setting', ['Hospital Employed', 'Hospital-Employed', 'Hospital']);
-        } else {
-          query = query.eq('Practice_Setting', practiceType);
-        }
-      }
-      if (locationFilter && locationFilter !== 'All Regions') {
-        query = query.eq('Geographic_Location', locationFilter);
-      }
-
-      // Execute query
+      console.log('Executing final query...');
       const { data, error, count } = await query;
 
       if (error) {
+        console.error('Supabase query error:', error);
         throw error;
       }
 
-      // Transform the data to match your existing structure
+      console.log('Query successful. Records found:', data?.length);
+      console.log('Sample record:', JSON.stringify(data?.[0], null, 2));
+      console.log('Total count:', count);
+
+      // Transform the data
+      const parseCurrency = (value) => {
+        if (!value) return 0;
+        // Remove $ and commas, then convert to float
+        return parseFloat(value.replace(/[$,]/g, '')) || 0;
+      };
+
       const transformedData = data.map(item => ({
-        id: item.ID,
-        salary: parseFloat(item.Total_Compensation) || parseFloat(item.Base_Salary) || 0,
-        specialty: item.Specialty,
-        subspecialty: item.Subspecialty,
-        practiceType: item.Practice_Setting,
-        location: item.Geographic_Location,
-        employer: item.Owner,
-        employerType: item.Practice_Setting,
-        bonusIncentives: item.Bonus_Incentives,
-        wouldChooseAgain: item.Choosespecialty,
+        id: item.id,
+        salary: parseCurrency(item.total_compensation) || parseCurrency(item.base_salary) || 0,
+        specialty: item.specialty,
+        subspecialty: item.subspecialty,
+        practiceType: item.practice_setting,
+        location: item.geographic_location,
+        employerType: item.practice_setting,
+        bonusIncentives: parseCurrency(item.bonus_incentives) || 0,
+        wouldChooseAgain: item.choosespecialty,
         submissionDate: item.created_date,
-        yearsOfExperience: item.Years_of_Experience,
-        hoursWorkedPerWeek: item.Hours_Worked,
-        paidTimeOff: item.Benefits,
-        productivityModel: item.RVU_Bonus_Structure,
-        satisfactionLevel: item.Satisfaction_Level,
-        city: item.City,
-        state: item.State,
-        callSchedule: item.Call_Schedule,
-        rvuTarget: item.RVU_Target,
-        rvuRate: item.RVU_Rate,
-        actualRVU: item.Actual_RVU_Production,
-        productionBonus: item.Production_Bonus,
-        negotiationStatus: item.Negotiation_Status
+        yearsOfExperience: item.years_of_experience,
+        hoursWorkedPerWeek: item.hours_worked,
+        paidTimeOff: item.benefits,
+        productivityModel: item.rvu_bonus_structure,
+        satisfactionLevel: parseFloat(item.satisfaction_level) || 0,
+        city: item.city,
+        state: item.state,
+        callSchedule: item.call_schedule,
+        rvuTarget: item.rvu_target,
+        rvuRate: item.rvu_rate,
+        actualRVU: item.actual_rvu_production,
+        productionBonus: parseCurrency(item.production_bonus) || 0,
+        negotiationStatus: item.negotiation_status
       }));
+
+      console.log('Data transformation complete. Sample transformed record:', JSON.stringify(transformedData[0], null, 2));
+      console.log('Sample original record fields:', Object.keys(data[0]));
+      console.log('Sample original record values:', JSON.stringify(data[0], null, 2));
 
       // Update state
       setSalaryData(transformedData);
@@ -158,7 +194,6 @@ const SalaryDrDashboard = () => {
           timeAgo: formatTimeAgo(new Date(item.submissionDate)),
           specialty: item.specialty,
           location: `${item.city}, ${item.state}`,
-          employer: item.employer,
           compensation: item.salary,
           bonusIncentives: item.bonusIncentives,
           wouldChooseAgain: item.wouldChooseAgain,
@@ -166,6 +201,7 @@ const SalaryDrDashboard = () => {
         }));
 
       setRecentSubmissions(recentSubmissions);
+      processData(transformedData);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err.message || 'Failed to fetch data');
@@ -189,7 +225,11 @@ const SalaryDrDashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-gray-700">Loading salary data...</p>
+          <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
+        </div>
       </div>
     );
   }
@@ -197,12 +237,24 @@ const SalaryDrDashboard = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500 text-center">
-          <p className="text-xl font-semibold">Error loading data</p>
-          <p className="mt-2">{error}</p>
+        <div className="text-center max-w-lg mx-auto">
+          <div className="text-red-500 mb-4">
+            <svg className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading data</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="text-sm text-gray-500 mb-4">
+            Please check your connection and try again. If the problem persists, contact support.
+          </div>
           <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => {
+              setError(null);
+              setIsLoading(false);
+              fetchData();
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
             Retry
           </button>
@@ -872,7 +924,7 @@ const SalaryDrDashboard = () => {
       }
     };
 
-    if (loading) {
+    if (isLoading) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-blue-50">
           <div className="text-center">

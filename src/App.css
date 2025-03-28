@@ -1,5 +1,8 @@
 .App {
-  text-align: center;
+  text-align: left;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 .App-logo {
@@ -35,4 +38,114 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.error-message {
+  color: #dc3545;
+  padding: 1rem;
+  margin: 1rem 0;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  background-color: #f8d7da;
+}
+
+.filter-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.data-grid {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.data-grid th,
+.data-grid td {
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  text-align: left;
+}
+
+.data-grid th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.data-grid tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.data-grid tr:hover {
+  background-color: #e9ecef;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.pagination button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #dee2e6;
+  background-color: white;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+.pagination button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.select-filter {
+  padding: 0.5rem;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  margin-right: 1rem;
+  min-width: 200px;
+}
+
+.chart-container {
+  margin: 2rem 0;
+  height: 400px;
+}
+
+.recent-submissions {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.recent-submission-item {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.recent-submission-item:last-child {
+  border-bottom: none;
+}
+
+.time-ago {
+  color: #6c757d;
+  font-size: 0.875rem;
 }
