@@ -3,6 +3,16 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { supabase } from './supabaseClient';
 import { PRACTICE_TYPES, REGIONS } from './types';
 
+// Helper function to parse currency values
+const parseCurrency = (value) => {
+  if (!value) return 0;
+  if (typeof value === 'number') return value;
+  // Remove all non-numeric characters except decimal point
+  const numericValue = value.toString().replace(/[^0-9.]/g, '');
+  // Convert to float and return, defaulting to 0 if invalid
+  return parseFloat(numericValue) || 0;
+};
+
 const SalaryDrDashboard = () => {
   const [practiceType, setPracticeType] = useState('All Practice Types');
   const [locationFilter, setLocationFilter] = useState('All Regions');
@@ -85,7 +95,8 @@ const SalaryDrDashboard = () => {
     try {
       const { data: specialtyData, error: specialtyError } = await supabase
         .from('salary_submissions')
-        .select('specialty, subspecialty');
+        .select('specialty, subspecialty')
+        .limit(10000); // Set a high limit to ensure we get all records
 
       if (specialtyError) throw specialtyError;
 
@@ -96,7 +107,7 @@ const SalaryDrDashboard = () => {
         if (item.specialty) {
           if (item.subspecialty) {
             specialtySet.add(`${item.specialty} - ${item.subspecialty}`);
-              } else {
+          } else {
             specialtySet.add(item.specialty);
           }
         }
@@ -104,6 +115,7 @@ const SalaryDrDashboard = () => {
 
       // Convert Set to sorted array
       const sortedSpecialties = Array.from(specialtySet).sort();
+      console.log('Total unique specialties found:', sortedSpecialties.length);
       setSpecialtyOptions(sortedSpecialties);
     } catch (error) {
       console.error('Error fetching specialties:', error);
@@ -136,8 +148,15 @@ const SalaryDrDashboard = () => {
 
     // Filter items based on current filters
     const filteredItems = items.filter(item => {
-      if (specialtyFilter !== 'All Physicians' && item.specialty?.toLowerCase() !== specialtyFilter.toLowerCase()) {
-        return false;
+      if (specialtyFilter !== 'All Physicians') {
+        // Check if the specialty filter includes a subspecialty
+        if (specialtyFilter.includes(' - ')) {
+          const [specialty, subspecialty] = specialtyFilter.split(' - ');
+          return item.specialty?.toLowerCase() === specialty.toLowerCase() && 
+                 item.subspecialty?.toLowerCase() === subspecialty.toLowerCase();
+        } else {
+          return item.specialty?.toLowerCase() === specialtyFilter.toLowerCase();
+        }
       }
       if (locationFilter !== 'All Regions' && item.geographicLocation !== locationFilter) {
         return false;
@@ -448,78 +467,80 @@ const SalaryDrDashboard = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const filters = {
-        specialty: specialtyFilter,
-        practiceType,
-        locationFilter,
-        currentPage
+      // First, let's get the total count
+      const { count: totalCount } = await supabase
+        .from('salary_submissions')
+        .select('*', { count: 'exact', head: true });
+
+      console.log('Total records in database:', totalCount);
+
+      // Function to build the base query with filters
+      const buildBaseQuery = () => {
+        let query = supabase
+          .from('salary_submissions')
+          .select('*');
+
+        if (specialtyFilter && specialtyFilter !== 'All Physicians') {
+          if (specialtyFilter.includes(' - ')) {
+            const [specialty, subspecialty] = specialtyFilter.split(' - ');
+            query = query
+              .eq('specialty', specialty)
+              .eq('subspecialty', subspecialty);
+          } else {
+            query = query.eq('specialty', specialtyFilter);
+          }
+        }
+        
+        if (practiceType && practiceType !== 'All Practice Types') {
+          if (practiceType === 'Hospital Employed') {
+            query = query.or('practice_setting.eq.Hospital Employed,practice_setting.eq.Hospital-Employed,practice_setting.eq.Hospital');
+          } else {
+            query = query.eq('practice_setting', practiceType);
+          }
+        }
+        
+        if (locationFilter && locationFilter !== 'All Regions') {
+          query = query.eq('geographic_location', locationFilter);
+        }
+
+        return query.order('created_date', { ascending: false });
       };
-      console.log('Starting data fetch with filters:', JSON.stringify(filters, null, 2));
 
-      // First try a simple query without filters to verify data access
-      const testQuery = await supabase
-        .from('salary_submissions')
-        .select('count');
-      
-      console.log('Initial count query result:', JSON.stringify(testQuery.data, null, 2));
+      // Fetch data in chunks
+      let allData = [];
+      let start = 0;
+      const chunkSize = 1000;
+      let hasMore = true;
 
-      // Build query with proper error handling
-      let query = supabase
-        .from('salary_submissions')
-        .select('*')
-        .order('created_date', { ascending: false });
+      while (hasMore) {
+        console.log(`Fetching records ${start} to ${start + chunkSize - 1}...`);
+        const query = buildBaseQuery().range(start, start + chunkSize - 1);
+        const { data: chunk, error: chunkError } = await query;
 
-      // Only apply filters if they're not set to "All"
-      if (specialtyFilter && specialtyFilter !== 'All Physicians') {
-        console.log('Applying specialty filter:', specialtyFilter);
-        // Check if the specialty filter includes a subspecialty
-        if (specialtyFilter.includes(' - ')) {
-          const [specialty, subspecialty] = specialtyFilter.split(' - ');
-          query = query
-            .eq('specialty', specialty)
-            .eq('subspecialty', subspecialty);
-        } else {
-          query = query.eq('specialty', specialtyFilter);
+        if (chunkError) {
+          console.error('Error fetching chunk:', chunkError);
+          throw chunkError;
         }
-      }
-      
-      if (practiceType && practiceType !== 'All Practice Types') {
-        console.log('Applying practice type filter:', practiceType);
-        if (practiceType === 'Hospital Employed') {
-          query = query.or('practice_setting.eq.Hospital Employed,practice_setting.eq.Hospital-Employed,practice_setting.eq.Hospital');
+
+        if (!chunk || chunk.length === 0) {
+          hasMore = false;
         } else {
-          query = query.eq('practice_setting', practiceType);
+          allData = [...allData, ...chunk];
+          start += chunkSize;
+          
+          // If we've fetched all records according to the count, stop
+          if (allData.length >= totalCount) {
+            hasMore = false;
+          }
         }
-      }
-      
-      if (locationFilter && locationFilter !== 'All Regions') {
-        console.log('Applying location filter:', locationFilter);
-        query = query.eq('geographic_location', locationFilter);
+
+        console.log(`Fetched ${chunk?.length || 0} records in this chunk. Total records so far: ${allData.length}`);
       }
 
-      console.log('Executing final query...');
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Supabase query error:', error);
-        throw error;
-      }
-
-      console.log('Query successful. Records found:', data?.length);
+      console.log('All chunks fetched. Total records:', allData.length);
 
       // Transform the data
-      const parseCurrency = (value) => {
-        if (!value) return 0;
-        // If value is already a number, return it
-        if (typeof value === 'number') return value;
-        // If it's a string, remove $ and commas
-        if (typeof value === 'string') {
-          return parseFloat(value.replace(/[$,]/g, '')) || 0;
-        }
-        return 0;
-      };
-
-      const transformedData = data.map(item => ({
+      const transformedData = allData.map(item => ({
         id: item.id,
         salary: parseCurrency(item.total_compensation) || parseCurrency(item.base_salary) || 0,
         specialty: item.specialty,
@@ -533,7 +554,7 @@ const SalaryDrDashboard = () => {
           } else if (setting.includes('private')) {
             return 'Private Practice';
           }
-          return item.practice_setting || 'Hospital Employed'; // Show original value or default
+          return item.practice_setting || 'Hospital Employed';
         })(),
         location: item.city && item.state ? `${item.city}, ${item.state}` : item.state || 'Location Not Specified',
         employerType: (() => {
@@ -545,7 +566,7 @@ const SalaryDrDashboard = () => {
           } else if (setting.includes('private')) {
             return 'Private Practice';
           }
-          return item.practice_setting || 'Hospital Employed'; // Show original value or default
+          return item.practice_setting || 'Hospital Employed';
         })(),
         bonusIncentives: parseCurrency(item.bonus_incentives) || 0,
         wouldChooseAgain: item.choosespecialty,
@@ -567,6 +588,8 @@ const SalaryDrDashboard = () => {
         baseSalary: parseCurrency(item.base_salary) || 0,
         geographicLocation: item.geographic_location
       }));
+
+      console.log('Data transformation complete. Transformed records:', transformedData.length);
 
       // Update state
       setSalaryData(transformedData);
@@ -592,9 +615,7 @@ const SalaryDrDashboard = () => {
       processData(transformedData);
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError(err.message || 'Failed to fetch data');
-      setSalaryData([]);
-      setRecentSubmissions([]);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -695,16 +716,18 @@ const SalaryDrDashboard = () => {
       const handleSpecialtySelect = (specialty) => {
       setSearchQuery(specialty);
       setFilteredSpecialties([]);
-      
-      // Extract primary specialty for filtering
-        const primarySpecialty = specialty.includes(' - ') 
-          ? specialty.split(' - ')[0] 
-          : specialty;
-        
-        setSpecialtyFilter(primarySpecialty);
+      setSpecialtyFilter(specialty); // Store the full specialty string including subspecialty
       };
     
       const handleSearchSubmit = () => {
+        if (!searchQuery.trim()) {
+          // If search query is empty, reset to show all physicians
+          setSpecialtyFilter('All Physicians');
+          setFilteredSpecialties([]);
+          setSearchQuery('');
+          return;
+        }
+
         if (searchQuery && !specialtyFilter.includes(searchQuery)) {
           const exactMatch = specialtyOptions.find(
             s => s.toLowerCase() === searchQuery.toLowerCase()
