@@ -146,6 +146,8 @@ const SalaryDrDashboard = () => {
       return;
     }
 
+    console.log('Processing data for items:', items.length);
+
     // Filter items based on current filters
     const filteredItems = items.filter(item => {
       if (specialtyFilter !== 'All Physicians') {
@@ -162,7 +164,8 @@ const SalaryDrDashboard = () => {
         return false;
       }
       if (practiceType !== 'All Practice Types') {
-        const practiceSetting = (item.practiceType || '').toLowerCase();
+        const practiceSetting = (item.practice_setting || '').toLowerCase().trim();
+        console.log('Filtering practice setting:', practiceSetting, 'for type:', practiceType);
         if (practiceType === 'Hospital Employed') {
           return practiceSetting.includes('hospital') || practiceSetting.includes('employed');
         } else if (practiceType === 'Academic') {
@@ -174,20 +177,29 @@ const SalaryDrDashboard = () => {
       return true;
     });
 
+    console.log('Filtered items:', filteredItems.length);
+
     const validCompItems = filteredItems.filter(item => {
       return item.totalCompensation > 0;
-      });
-  
-      let avgTotalComp = 0;
-      if (validCompItems.length > 0) {
-        const totalComp = validCompItems.reduce((sum, item) => {
-        return sum + item.totalCompensation;
-        }, 0);
-  
-        avgTotalComp = Math.round(totalComp / validCompItems.length);
-      }
+    });
 
-      let totalBase = 0;
+    console.log('Valid compensation items:', validCompItems.length);
+
+    let avgTotalComp = 0;
+    if (validCompItems.length > 0) {
+      const totalComp = validCompItems.reduce((sum, item) => {
+        return sum + item.totalCompensation;
+      }, 0);
+
+      avgTotalComp = Math.round(totalComp / validCompItems.length);
+    }
+
+    // Count physicians who would choose their specialty again
+    const wouldChooseAgainCount = filteredItems.filter(item => item.wouldChooseAgain === true).length;
+    console.log('Would choose again count:', wouldChooseAgainCount, 'out of', filteredItems.length);
+    const calculatedSatisfactionPercentage = filteredItems.length > 0 ? Math.round((wouldChooseAgainCount / filteredItems.length) * 100) : 0;
+
+    let totalBase = 0;
     let totalBonuses = 0;
     let totalOther = 0;
     let baseCount = 0;
@@ -279,28 +291,28 @@ const SalaryDrDashboard = () => {
     const allHospitalItems = [...hospitalItems, ...uncategorizedItems];
 
     const comparisonData = [
-        {
-          type: 'Academic',
-          avgComp: calculateAverage(academicItems),
-          submissions: academicItems.length
-        },
-        {
-          type: 'Hospital Employed',
+      {
+        type: 'Academic',
+        avgComp: calculateAverage(academicItems),
+        submissions: academicItems.length
+      },
+      {
+        type: 'Hospital Employed',
         avgComp: calculateAverage(allHospitalItems),
         submissions: allHospitalItems.length
-        },
-        {
-          type: 'Private Practice',
-          avgComp: calculateAverage(privateItems),
-          submissions: privateItems.length
-        }
-      ];
-  
-      setComparisonData(comparisonData);
-  
+      },
+      {
+        type: 'Private Practice',
+        avgComp: calculateAverage(privateItems),
+        submissions: privateItems.length
+      }
+    ];
+
+    setComparisonData(comparisonData);
+
     let sortedItems = [...filteredItems];
-      const itemsWithDates = sortedItems.filter(item => item.submissionDate);
-  
+    const itemsWithDates = sortedItems.filter(item => item.submissionDate);
+
     // First filter by practice type if a specific type is selected
     const practiceTypeFiltered = activeTab === 'overview' 
       ? itemsWithDates 
@@ -346,118 +358,92 @@ const SalaryDrDashboard = () => {
     }).slice(0, 10);
 
     const recentSubmissions = sortedItems.map(item => {
-        const totalComp = typeof item.totalCompensation === 'string'
-          ? Number(item.totalCompensation.replace(/[^0-9.-]+/g, ''))
-          : Number(item.totalCompensation || 0);
-  
+      const totalComp = typeof item.totalCompensation === 'string'
+        ? Number(item.totalCompensation.replace(/[^0-9.-]+/g, ''))
+        : Number(item.totalCompensation || 0);
+
       const bonusIncentives = typeof item.bonusIncentives === 'string'
         ? Number(item.bonusIncentives.replace(/[^0-9.-]+/g, ''))
         : Number(item.bonusIncentives || 0);
 
-        let timeAgo = 'Recently';
-        if (item.submissionDate) {
-          const now = new Date();
-          const past = new Date(item.submissionDate);
-          const diffMs = now - past;
-          const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  
-          if (diffDays < 1) {
-            timeAgo = 'Today';
-          } else if (diffDays === 1) {
-            timeAgo = 'Yesterday';
-          } else if (diffDays < 7) {
-            timeAgo = `${diffDays}d ago`;
-          } else if (diffDays < 30) {
-            timeAgo = `${Math.floor(diffDays / 7)}w ago`;
-          } else {
-            timeAgo = `${Math.floor(diffDays / 30)}mo ago`;
-          }
-        }
+      let timeAgo = 'Recently';
+      if (item.submissionDate) {
+        const now = new Date();
+        const past = new Date(item.submissionDate);
+        const diffMs = now - past;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      // Normalize the practice setting
-      const practiceSetting = item.practiceSetting?.toLowerCase() || '';
-      let normalizedPracticeSetting;
-      
-      if (practiceSetting === 'academic' || practiceSetting === 'academic medicine') {
-        normalizedPracticeSetting = 'Academic';
-      } else if (['hospital employed', 'hospital-employed', 'hospital'].includes(practiceSetting)) {
-        normalizedPracticeSetting = 'Hospital-Employed';
-      } else if (['private practice', 'private'].includes(practiceSetting)) {
-        normalizedPracticeSetting = 'Private Practice';
-      } else {
-        // Keep the original value if it doesn't match any known type
-        normalizedPracticeSetting = item.practiceSetting || 'Unknown';
+        if (diffDays < 1) {
+          timeAgo = 'Today';
+        } else if (diffDays === 1) {
+          timeAgo = 'Yesterday';
+        } else if (diffDays < 7) {
+          timeAgo = `${diffDays}d ago`;
+        } else if (diffDays < 30) {
+          timeAgo = `${Math.floor(diffDays / 7)}w ago`;
+        } else {
+          timeAgo = `${Math.floor(diffDays / 30)}mo ago`;
+        }
       }
-  
-        return {
-          id: item._id || Math.random().toString(),
-          timeAgo,
-          specialty: item.specialty || 'General',
-          subspecialty: item.subspecialty || '',
-          yearsOfExperience: item.yearsOfExperience || 0,
-          location: item.geographicLocation || 'United States',
-          employer: item.employer || '',
-        employerType: normalizedPracticeSetting,
-          workload: `${item.hoursWorkedPerWeek || 40} hrs/week`,
-          pto: item.paidTimeOff || '4 wks',
-          compensation: totalComp,
-          productivity: item.productivityModel || 'Salary',
-          submissionDate: item.submissionDate || '',
-          satisfaction: item.satisfactionLevel || 0,
+
+      return {
+        id: item.id || Math.random().toString(),
+        timeAgo,
+        specialty: item.specialty || 'General',
+        subspecialty: item.subspecialty || '',
+        yearsOfExperience: item.yearsOfExperience || 0,
+        location: item.location || 'United States',
+        employer: item.employer || '',
+        employerType: item.practiceType,
+        workload: `${item.hoursWorkedPerWeek || 40} hrs/week`,
+        pto: item.paidTimeOff || '4 wks',
+        compensation: totalComp,
+        productivity: item.productivityModel || 'Salary',
+        submissionDate: item.submissionDate || '',
+        satisfaction: item.satisfactionLevel || 0,
         bonusIncentives: bonusIncentives,
-        wouldChooseAgain: item.chooseSpecialtyAgain === 'Yes'
-        };
-      });
-  
-      setRecentSubmissions(recentSubmissions);
-  
-      const rvuValues = items
-        .map(item => Number(item.rvuValue || 0))
-        .filter(val => !isNaN(val) && val > 0);
-      
-      const rvuCount = items
-        .map(item => Number(item.rvuCount || 0))
-        .filter(val => !isNaN(val) && val > 0);
-  
-      const avgRVU = rvuValues.length > 0
-        ? rvuValues.reduce((sum, val) => sum + val, 0) / rvuValues.length
-        : 0;
-  
-      const avgRVUCount = rvuCount.length > 0
-        ? rvuCount.reduce((sum, val) => sum + val, 0) / rvuCount.length
-        : 0;
-  
-    const satisfactionValues = filteredItems
-        .map(item => Number(item.satisfactionLevel || 0))
-        .filter(val => !isNaN(val) && val > 0);
-  
-      const avgSatisfaction = satisfactionValues.length > 0
-        ? satisfactionValues.reduce((sum, val) => sum + val, 0) / satisfactionValues.length
-        : 0;
-  
-    const wouldChooseAgain = filteredItems.filter(item => item.choosespecialty === true).length;
-    const satisfactionPercentage = filteredItems.length > 0 ? Math.round((wouldChooseAgain / filteredItems.length) * 100) : 0;
-  
-      setAggregatedStats({
-        averageSalary: avgTotalComp,
+        wouldChooseAgain: item.wouldChooseAgain
+      };
+    });
+
+    setRecentSubmissions(recentSubmissions);
+
+    const rvuValues = items
+      .map(item => Number(item.rvuValue || 0))
+      .filter(val => !isNaN(val) && val > 0);
+    
+    const rvuCount = items
+      .map(item => Number(item.rvuCount || 0))
+      .filter(val => !isNaN(val) && val > 0);
+
+    const avgRVU = rvuValues.length > 0
+      ? rvuValues.reduce((sum, val) => sum + val, 0) / rvuValues.length
+      : 0;
+
+    const avgRVUCount = rvuCount.length > 0
+      ? rvuCount.reduce((sum, val) => sum + val, 0) / rvuCount.length
+      : 0;
+
+    setAggregatedStats({
+      averageSalary: avgTotalComp,
       totalSubmissions: validCompItems.length,
-        base: baseCount > 0 ? Math.round(totalBase / baseCount) : 0,
-        bonuses: bonusCount > 0 ? Math.round(totalBonuses / bonusCount) : 0,
-        bonusesPercentage: items.length > 0 ? Math.round((bonusCount / items.length) * 100) : 0,
-        otherIncome: otherCount > 0 ? Math.round(totalOther / otherCount) : 0,
-        otherIncomePercentage: items.length > 0 ? Math.round((otherCount / items.length) * 100) : 0,
-        workload: workloadCount > 0 ? Math.round(workloadTotal / workloadCount * 10) / 10 : 0,
-      satisfaction: satisfactionPercentage,
-        satisfactionPercentage,
-        updateDate: new Date().toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        }),
-        avgRVU: Math.round(avgRVU * 100) / 100 || 0,
-        avgRVUCount: Math.round(avgRVUCount) || 0
-      });
-    };
+      base: baseCount > 0 ? Math.round(totalBase / baseCount) : 0,
+      bonuses: bonusCount > 0 ? Math.round(totalBonuses / bonusCount) : 0,
+      bonusesPercentage: items.length > 0 ? Math.round((bonusCount / items.length) * 100) : 0,
+      otherIncome: otherCount > 0 ? Math.round(totalOther / otherCount) : 0,
+      otherIncomePercentage: items.length > 0 ? Math.round((otherCount / items.length) * 100) : 0,
+      workload: workloadCount > 0 ? Math.round(workloadTotal / workloadCount * 10) / 10 : 0,
+      satisfaction: calculatedSatisfactionPercentage,
+      satisfactionPercentage: calculatedSatisfactionPercentage,
+      updateDate: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+      avgRVU: Math.round(avgRVU * 100) / 100 || 0,
+      avgRVUCount: Math.round(avgRVUCount) || 0
+    });
+  };
 
   useEffect(() => {
     fetchData();
@@ -540,54 +526,58 @@ const SalaryDrDashboard = () => {
       console.log('All chunks fetched. Total records:', allData.length);
 
       // Transform the data
-      const transformedData = allData.map(item => ({
-        id: item.id,
-        salary: parseCurrency(item.total_compensation) || parseCurrency(item.base_salary) || 0,
-        specialty: item.specialty,
-        subspecialty: item.subspecialty,
-        practiceType: (() => {
-          const setting = (item.practice_setting || '').toLowerCase();
-          if (setting.includes('academic')) {
-            return 'Academic';
-          } else if (setting.includes('hospital') || setting.includes('employed')) {
-            return 'Hospital Employed';
-          } else if (setting.includes('private')) {
-            return 'Private Practice';
-          }
-          return item.practice_setting || 'Hospital Employed';
-        })(),
-        location: item.city && item.state ? `${item.city}, ${item.state}` : item.state || 'Location Not Specified',
-        employerType: (() => {
-          const setting = (item.practice_setting || '').toLowerCase();
-          if (setting.includes('academic')) {
-            return 'Academic';
-          } else if (setting.includes('hospital') || setting.includes('employed')) {
-            return 'Hospital Employed';
-          } else if (setting.includes('private')) {
-            return 'Private Practice';
-          }
-          return item.practice_setting || 'Hospital Employed';
-        })(),
-        bonusIncentives: parseCurrency(item.bonus_incentives) || 0,
-        wouldChooseAgain: item.choosespecialty,
-        submissionDate: item.created_date,
-        yearsOfExperience: item.years_of_experience,
-        hoursWorkedPerWeek: item.hours_worked,
-        paidTimeOff: item.benefits,
-        productivityModel: item.rvu_bonus_structure,
-        satisfactionLevel: parseFloat(item.satisfaction_level) || 0,
-        city: item.city,
-        state: item.state,
-        callSchedule: item.call_schedule,
-        rvuTarget: item.rvu_target,
-        rvuRate: item.rvu_rate,
-        actualRVU: item.actual_rvu_production,
-        productionBonus: parseCurrency(item.production_bonus) || 0,
-        negotiationStatus: item.negotiation_status,
-        totalCompensation: parseCurrency(item.total_compensation) || 0,
-        baseSalary: parseCurrency(item.base_salary) || 0,
-        geographicLocation: item.geographic_location
-      }));
+      const transformedData = allData.map(item => {
+        // Log raw values for debugging
+        console.log('Raw values:', {
+          choosespecialty: item.choosespecialty,
+          satisfaction_level: item.satisfaction_level
+        });
+
+        // Parse satisfaction level - ensure it's a number
+        const satisfactionLevel = Number(item.satisfaction_level) || 0;
+
+        // Parse would choose again - ensure it's a boolean
+        const wouldChooseAgain = item.choosespecialty === true;
+
+        // Normalize practice type
+        const normalizedPracticeSetting = (() => {
+          const setting = (item.practice_setting || '').toLowerCase().trim();
+          if (setting.includes('academic')) return 'Academic';
+          if (setting.includes('hospital') || setting.includes('employed')) return 'Hospital Employed';
+          if (setting.includes('private')) return 'Private Practice';
+          return 'Unknown';
+        })();
+
+        return {
+          id: item.id,
+          salary: parseCurrency(item.total_compensation) || parseCurrency(item.base_salary) || 0,
+          specialty: item.specialty,
+          subspecialty: item.subspecialty,
+          practiceType: normalizedPracticeSetting,
+          location: item.city && item.state ? `${item.city}, ${item.state}` : item.state || 'Location Not Specified',
+          employerType: normalizedPracticeSetting,
+          bonusIncentives: parseCurrency(item.bonus_incentives) || 0,
+          wouldChooseAgain: wouldChooseAgain,
+          submissionDate: item.created_date,
+          yearsOfExperience: item.years_of_experience,
+          hoursWorkedPerWeek: item.hours_worked,
+          paidTimeOff: item.benefits,
+          productivityModel: item.rvu_bonus_structure,
+          satisfactionLevel: satisfactionLevel,
+          city: item.city,
+          state: item.state,
+          callSchedule: item.call_schedule,
+          rvuTarget: item.rvu_target,
+          rvuRate: item.rvu_rate,
+          actualRVU: item.actual_rvu_production,
+          productionBonus: parseCurrency(item.production_bonus) || 0,
+          negotiationStatus: item.negotiation_status,
+          totalCompensation: parseCurrency(item.total_compensation) || 0,
+          baseSalary: parseCurrency(item.base_salary) || 0,
+          geographicLocation: item.geographic_location,
+          practice_setting: item.practice_setting
+        };
+      });
 
       console.log('Data transformation complete. Transformed records:', transformedData.length);
 
@@ -603,12 +593,13 @@ const SalaryDrDashboard = () => {
           specialty: item.specialty,
           subspecialty: item.subspecialty || '',
           location: item.location,
-          employerType: item.employerType,
+          employerType: item.practiceType,
           compensation: item.totalCompensation,
           bonusIncentives: item.bonusIncentives,
           wouldChooseAgain: item.wouldChooseAgain,
           satisfactionLevel: item.satisfactionLevel,
-          yearsOfExperience: item.yearsOfExperience
+          yearsOfExperience: item.yearsOfExperience,
+          workload: item.hoursWorkedPerWeek ? `${item.hoursWorkedPerWeek} hrs/week` : 'Not specified'
         }));
 
       setRecentSubmissions(recentSubmissions);
@@ -1260,22 +1251,25 @@ const SalaryDrDashboard = () => {
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <p className="text-sm font-medium text-gray-700">Satisfaction Score:</p>
-                                  <p className="text-sm text-gray-900">{submission.satisfaction}/5.0</p>
+                                  <p className="text-sm text-gray-900">{submission.satisfactionLevel || 0}/5.0</p>
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-gray-700">Bonus/Incentives:</p>
-                                <p className="text-sm text-gray-900">{formatCurrency(submission.bonusIncentives)}</p>
+                                  <p className="text-sm text-gray-900">{formatCurrency(submission.bonusIncentives)}</p>
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-gray-700">Would Choose Again:</p>
-                                <p className="text-sm text-gray-900">
-                                  {submission.wouldChooseAgain === true ? 'Yes' : 
-                                   submission.wouldChooseAgain === false ? 'No' : 'N/A'}
-                                </p>
+                                  <p className="text-sm text-gray-900">
+                                    {submission.wouldChooseAgain === true ? 'Yes' : 'No'}
+                                  </p>
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-gray-700">Hours Worked:</p>
                                   <p className="text-sm text-gray-900">{submission.workload}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-700">Practice Type:</p>
+                                  <p className="text-sm text-gray-900">{submission.employerType}</p>
                                 </div>
                               </div>
                             </td>
