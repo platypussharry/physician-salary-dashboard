@@ -13,6 +13,67 @@ const parseCurrency = (value) => {
   return parseFloat(numericValue) || 0;
 };
 
+// Add state to region mapping
+const STATE_TO_REGION = {
+  // Northeast
+  'Connecticut': 'Northeast',
+  'Maine': 'Northeast',
+  'Massachusetts': 'Northeast',
+  'New Hampshire': 'Northeast',
+  'Rhode Island': 'Northeast',
+  'Vermont': 'Northeast',
+  'New Jersey': 'Northeast',
+  'New York': 'Northeast',
+  'Pennsylvania': 'Northeast',
+  
+  // Midwest
+  'Illinois': 'Midwest',
+  'Indiana': 'Midwest',
+  'Michigan': 'Midwest',
+  'Ohio': 'Midwest',
+  'Wisconsin': 'Midwest',
+  'Iowa': 'Midwest',
+  'Kansas': 'Midwest',
+  'Minnesota': 'Midwest',
+  'Missouri': 'Midwest',
+  'Nebraska': 'Midwest',
+  'North Dakota': 'Midwest',
+  'South Dakota': 'Midwest',
+  
+  // South
+  'Delaware': 'South',
+  'Florida': 'South',
+  'Georgia': 'South',
+  'Maryland': 'South',
+  'North Carolina': 'South',
+  'South Carolina': 'South',
+  'Virginia': 'South',
+  'West Virginia': 'South',
+  'Alabama': 'South',
+  'Kentucky': 'South',
+  'Mississippi': 'South',
+  'Tennessee': 'South',
+  'Arkansas': 'South',
+  'Louisiana': 'South',
+  'Oklahoma': 'South',
+  'Texas': 'South',
+  
+  // West
+  'Arizona': 'West',
+  'Colorado': 'West',
+  'Idaho': 'West',
+  'Montana': 'West',
+  'Nevada': 'West',
+  'New Mexico': 'West',
+  'Utah': 'West',
+  'Wyoming': 'West',
+  'Alaska': 'West',
+  'California': 'West',
+  'Hawaii': 'West',
+  'Oregon': 'West',
+  'Washington': 'West'
+};
+
 const SalaryDrDashboard = () => {
   const [practiceType, setPracticeType] = useState('All Practice Types');
   const [locationFilter, setLocationFilter] = useState('All Regions');
@@ -161,12 +222,13 @@ const SalaryDrDashboard = () => {
           return item.specialty?.toLowerCase() === specialtyFilter.toLowerCase();
         }
       }
-      if (locationFilter !== 'All Regions' && item.geographicLocation !== locationFilter) {
-        return false;
+      if (locationFilter !== 'All Regions') {
+        const itemState = item.state;
+        const itemRegion = item.geographicLocation;
+        return itemRegion === locationFilter || STATE_TO_REGION[itemState] === locationFilter;
       }
       if (practiceType !== 'All Practice Types') {
         const practiceSetting = (item.practice_setting || '').toLowerCase().trim();
-        console.log('Filtering practice setting:', practiceSetting, 'for type:', practiceType);
         if (practiceType === 'Hospital Employed') {
           return practiceSetting.includes('hospital') || practiceSetting.includes('employed');
         } else if (practiceType === 'Academic') {
@@ -492,7 +554,13 @@ const SalaryDrDashboard = () => {
         }
         
         if (locationFilter && locationFilter !== 'All Regions') {
-          query = query.eq('geographic_location', locationFilter);
+          // Create an array of states for the selected region
+          const statesInRegion = Object.entries(STATE_TO_REGION)
+            .filter(([_, region]) => region === locationFilter)
+            .map(([state, _]) => state);
+          
+          // Build the OR condition for geographic_location and state
+          query = query.or(`geographic_location.eq.${locationFilter},state.in.(${statesInRegion.join(',')})`);
         }
 
         return query.order('created_date', { ascending: false });
@@ -1512,12 +1580,12 @@ const SalaryDrDashboard = () => {
           <div className="flex flex-wrap gap-4 justify-center">
             <button
               onClick={() => window.location.href = '/submit-salary'}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200"
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition duration-200"
             >
               Submit Your Salary
             </button>
-            </div>
           </div>
+        </div>
       </div>
     </div>
 
