@@ -559,7 +559,12 @@ const SalaryDrDashboard = () => {
             specialty: item.specialty || 'General',
             subspecialty: item.subspecialty || '',
             practiceType: normalizedPracticeSetting,
-            location: item.city && item.state ? `${item.city}, ${item.state}` : item.state || 'Location Not Specified',
+            location: (() => {
+              if (item.city && item.state) return `${item.city}, ${item.state}`;
+              if (item.state) return item.state;
+              if (item.geographic_location) return item.geographic_location;
+              return 'Location Not Specified';
+            })(),
             employerType: normalizedPracticeSetting,
             bonusIncentives: parseCurrency(item.bonus_incentives) || 0,
             wouldChooseAgain: item.choosespecialty === true,
@@ -1356,7 +1361,6 @@ const SalaryDrDashboard = () => {
                 </div>
                 <div className="flex flex-col items-end flex-shrink-0">
                   <div className="text-xl font-bold text-gray-900">${aggregatedStats.averageSalary.toLocaleString()}</div>
-                  <div className="text-sm text-gray-500 whitespace-nowrap">({aggregatedStats.totalSubmissions.toLocaleString()} submissions)</div>
                 </div>
               </div>
 
