@@ -74,6 +74,25 @@ const STATE_TO_REGION = {
   'Washington': 'West'
 };
 
+// Add calculateAverage helper function
+const calculateAverage = (items) => {
+  if (!items || items.length === 0) return 0;
+  const validItems = items.filter(item => {
+    const comp = typeof item.totalCompensation === 'string'
+      ? parseFloat(item.totalCompensation.replace(/[$,]/g, ''))
+      : parseFloat(item.totalCompensation);
+    return !isNaN(comp) && comp > 0;
+  });
+  if (validItems.length === 0) return 0;
+  const total = validItems.reduce((sum, item) => {
+    const comp = typeof item.totalCompensation === 'string'
+      ? parseFloat(item.totalCompensation.replace(/[$,]/g, ''))
+      : parseFloat(item.totalCompensation);
+    return sum + comp;
+  }, 0);
+  return Math.round(total / validItems.length);
+};
+
 const SalaryDrDashboard = () => {
   const [practiceType, setPracticeType] = useState('All Practice Types');
   const [locationFilter, setLocationFilter] = useState('All Regions');
@@ -230,7 +249,10 @@ const SalaryDrDashboard = () => {
       if (practiceType !== 'All Practice Types') {
         const practiceSetting = (item.practice_setting || '').toLowerCase().trim();
         if (practiceType === 'Hospital Employed') {
-          return practiceSetting.includes('hospital') || practiceSetting.includes('employed');
+          return practiceSetting.includes('hospital') || 
+                 practiceSetting.includes('employed') || 
+                 practiceSetting === 'hospital employed' || 
+                 practiceSetting === 'hospital-employed';
         } else if (practiceType === 'Academic') {
           return practiceSetting.includes('academic');
         } else if (practiceType === 'Private Practice') {
@@ -323,36 +345,26 @@ const SalaryDrDashboard = () => {
 
     setSalaryDistribution(percentiles);
 
-    const academicItems = validCompItems.filter(item => 
-      item.practiceType === 'Academic'
-    );
-    const hospitalItems = validCompItems.filter(item => 
-      item.practiceType === 'Hospital Employed'
-    );
-    const privateItems = validCompItems.filter(item => 
-      item.practiceType === 'Private Practice'
-    );
+    // Update how we categorize items for comparison data
+    const academicItems = validCompItems.filter(item => {
+      const practiceSetting = (item.practice_setting || '').toLowerCase().trim();
+      return practiceSetting.includes('academic');
+    });
 
-    const calculateAverage = (items) => {
-      if (!items || items.length === 0) return 0;
-      return Math.round(items.reduce((sum, item) => {
-        const value = typeof item.totalCompensation === 'string'
-          ? Number(item.totalCompensation.replace(/[^0-9.-]+/g, ''))
-          : Number(item.totalCompensation || 0);
-        return sum + value;
-      }, 0) / items.length);
-    };
+    const hospitalItems = validCompItems.filter(item => {
+      const practiceSetting = (item.practice_setting || '').toLowerCase().trim();
+      return practiceSetting.includes('hospital') || 
+             practiceSetting.includes('employed') || 
+             practiceSetting === 'hospital employed' || 
+             practiceSetting === 'hospital-employed';
+    });
 
-    // Ensure any items not caught in the above filters are categorized appropriately
-    const uncategorizedItems = validCompItems.filter(item => 
-      !academicItems.includes(item) && 
-      !hospitalItems.includes(item) && 
-      !privateItems.includes(item)
-    );
+    const privateItems = validCompItems.filter(item => {
+      const practiceSetting = (item.practice_setting || '').toLowerCase().trim();
+      return practiceSetting.includes('private');
+    });
 
-    // Add uncategorized items to hospital employed (since that's the most common default)
-    const allHospitalItems = [...hospitalItems, ...uncategorizedItems];
-
+    // Remove the uncategorized items logic since we're being more inclusive with our filters
     const comparisonData = [
       {
         type: 'Academic',
@@ -361,8 +373,8 @@ const SalaryDrDashboard = () => {
       },
       {
         type: 'Hospital Employed',
-        avgComp: calculateAverage(allHospitalItems),
-        submissions: allHospitalItems.length
+        avgComp: calculateAverage(hospitalItems),
+        submissions: hospitalItems.length
       },
       {
         type: 'Private Practice',
@@ -547,19 +559,19 @@ const SalaryDrDashboard = () => {
         
         if (practiceType && practiceType !== 'All Practice Types') {
           if (practiceType === 'Hospital Employed') {
-            query = query.or('practice_setting.eq.Hospital Employed,practice_setting.eq.Hospital-Employed,practice_setting.eq.Hospital');
-          } else {
-            query = query.eq('practice_setting', practiceType);
+            query = query.or('practice_setting.ilike.%hospital%,practice_setting.ilike.%employed%,practice_setting.eq.Hospital Employed,practice_setting.eq.Hospital-Employed');
+          } else if (practiceType === 'Academic') {
+            query = query.ilike('practice_setting', '%academic%');
+          } else if (practiceType === 'Private Practice') {
+            query = query.ilike('practice_setting', '%private%');
           }
         }
         
         if (locationFilter && locationFilter !== 'All Regions') {
-          // Create an array of states for the selected region
           const statesInRegion = Object.entries(STATE_TO_REGION)
             .filter(([_, region]) => region === locationFilter)
             .map(([state, _]) => state);
           
-          // Build the OR condition for geographic_location and state
           query = query.or(`geographic_location.eq.${locationFilter},state.in.(${statesInRegion.join(',')})`);
         }
 
