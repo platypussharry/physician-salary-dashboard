@@ -358,6 +358,8 @@ const SalaryDrDashboard = () => {
     }).slice(0, 10);
 
     const recentSubmissions = sortedItems.map(item => {
+      if (!item) return null;  // Skip if item is undefined
+      
       const totalComp = typeof item.totalCompensation === 'string'
         ? Number(item.totalCompensation.replace(/[^0-9.-]+/g, ''))
         : Number(item.totalCompensation || 0);
@@ -386,15 +388,18 @@ const SalaryDrDashboard = () => {
         }
       }
 
+      // Generate a unique ID if none exists
+      const uniqueId = item.id || `temp-${Math.random().toString(36).substr(2, 9)}`;
+
       return {
-        id: item.id || Math.random().toString(),
+        id: uniqueId,
         timeAgo,
         specialty: item.specialty || 'General',
         subspecialty: item.subspecialty || '',
         yearsOfExperience: item.yearsOfExperience || 0,
         location: item.location || 'United States',
         employer: item.employer || '',
-        employerType: item.practiceType,
+        employerType: item.practiceType || 'Unknown',
         workload: `${item.hoursWorkedPerWeek || 40} hrs/week`,
         pto: item.paidTimeOff || '4 wks',
         compensation: totalComp,
@@ -402,9 +407,9 @@ const SalaryDrDashboard = () => {
         submissionDate: item.submissionDate || '',
         satisfaction: item.satisfactionLevel || 0,
         bonusIncentives: bonusIncentives,
-        wouldChooseAgain: item.wouldChooseAgain
+        wouldChooseAgain: item.wouldChooseAgain || false
       };
-    });
+    }).filter(Boolean); // Remove any null entries
 
     setRecentSubmissions(recentSubmissions);
 
@@ -526,58 +531,58 @@ const SalaryDrDashboard = () => {
       console.log('All chunks fetched. Total records:', allData.length);
 
       // Transform the data
-      const transformedData = allData.map(item => {
-        // Log raw values for debugging
-        console.log('Raw values:', {
-          choosespecialty: item.choosespecialty,
-          satisfaction_level: item.satisfaction_level
+      const transformedData = allData
+        .filter(item => item && typeof item === 'object') // Ensure item exists and is an object
+        .map(item => {
+          // Log raw values for debugging
+          console.log('Raw data from DB:', {
+            id: item.id,
+            satisfaction_level: item.satisfaction_level,
+            raw_type: typeof item.satisfaction_level
+          });
+
+          const normalizedPracticeSetting = (() => {
+            const setting = (item.practice_setting || '').toLowerCase().trim();
+            if (setting.includes('academic')) return 'Academic';
+            if (setting.includes('hospital') || setting.includes('employed')) return 'Hospital Employed';
+            if (setting.includes('private')) return 'Private Practice';
+            return 'Unknown';
+          })();
+
+          // Generate a unique ID if none exists
+          const uniqueId = item.id || `temp-${Math.random().toString(36).substr(2, 9)}`;
+
+          // Create transformed item
+          return {
+            id: uniqueId,
+            salary: parseCurrency(item.total_compensation) || parseCurrency(item.base_salary) || 0,
+            specialty: item.specialty || 'General',
+            subspecialty: item.subspecialty || '',
+            practiceType: normalizedPracticeSetting,
+            location: item.city && item.state ? `${item.city}, ${item.state}` : item.state || 'Location Not Specified',
+            employerType: normalizedPracticeSetting,
+            bonusIncentives: parseCurrency(item.bonus_incentives) || 0,
+            wouldChooseAgain: item.choosespecialty === true,
+            submissionDate: item.created_date || new Date().toISOString(),
+            yearsOfExperience: Number(item.years_of_experience) || 0,
+            hoursWorkedPerWeek: Number(item.hours_worked) || 40,
+            paidTimeOff: item.benefits || '4 wks',
+            productivityModel: item.rvu_bonus_structure || 'Salary',
+            satisfactionLevel: parseInt(item.satisfaction_level, 10) || 0,
+            totalCompensation: parseCurrency(item.total_compensation) || 0,
+            city: item.city || '',
+            state: item.state || '',
+            callSchedule: item.call_schedule || '',
+            rvuTarget: Number(item.rvu_target) || 0,
+            rvuRate: Number(item.rvu_rate) || 0,
+            actualRVU: Number(item.actual_rvu_production) || 0,
+            productionBonus: parseCurrency(item.production_bonus) || 0,
+            negotiationStatus: item.negotiation_status || '',
+            baseSalary: parseCurrency(item.base_salary) || 0,
+            geographicLocation: item.geographic_location || 'Unknown',
+            practice_setting: item.practice_setting || 'Unknown'
+          };
         });
-
-        // Parse satisfaction level - ensure it's a number
-        const satisfactionLevel = Number(item.satisfaction_level) || 0;
-
-        // Parse would choose again - ensure it's a boolean
-        const wouldChooseAgain = item.choosespecialty === true;
-
-        // Normalize practice type
-        const normalizedPracticeSetting = (() => {
-          const setting = (item.practice_setting || '').toLowerCase().trim();
-          if (setting.includes('academic')) return 'Academic';
-          if (setting.includes('hospital') || setting.includes('employed')) return 'Hospital Employed';
-          if (setting.includes('private')) return 'Private Practice';
-          return 'Unknown';
-        })();
-
-        return {
-          id: item.id,
-          salary: parseCurrency(item.total_compensation) || parseCurrency(item.base_salary) || 0,
-          specialty: item.specialty,
-          subspecialty: item.subspecialty,
-          practiceType: normalizedPracticeSetting,
-          location: item.city && item.state ? `${item.city}, ${item.state}` : item.state || 'Location Not Specified',
-          employerType: normalizedPracticeSetting,
-          bonusIncentives: parseCurrency(item.bonus_incentives) || 0,
-          wouldChooseAgain: wouldChooseAgain,
-          submissionDate: item.created_date,
-          yearsOfExperience: item.years_of_experience,
-          hoursWorkedPerWeek: item.hours_worked,
-          paidTimeOff: item.benefits,
-          productivityModel: item.rvu_bonus_structure,
-          satisfactionLevel: satisfactionLevel,
-          city: item.city,
-          state: item.state,
-          callSchedule: item.call_schedule,
-          rvuTarget: item.rvu_target,
-          rvuRate: item.rvu_rate,
-          actualRVU: item.actual_rvu_production,
-          productionBonus: parseCurrency(item.production_bonus) || 0,
-          negotiationStatus: item.negotiation_status,
-          totalCompensation: parseCurrency(item.total_compensation) || 0,
-          baseSalary: parseCurrency(item.base_salary) || 0,
-          geographicLocation: item.geographic_location,
-          practice_setting: item.practice_setting
-        };
-      });
 
       console.log('Data transformation complete. Transformed records:', transformedData.length);
 
@@ -597,9 +602,10 @@ const SalaryDrDashboard = () => {
           compensation: item.totalCompensation,
           bonusIncentives: item.bonusIncentives,
           wouldChooseAgain: item.wouldChooseAgain,
-          satisfactionLevel: item.satisfactionLevel,
+          satisfactionLevel: item.satisfactionLevel, // Ensure this is included
           yearsOfExperience: item.yearsOfExperience,
-          workload: item.hoursWorkedPerWeek ? `${item.hoursWorkedPerWeek} hrs/week` : 'Not specified'
+          workload: item.hoursWorkedPerWeek ? `${item.hoursWorkedPerWeek} hrs/week` : 'Not specified',
+          submissionDate: item.submissionDate
         }));
 
       setRecentSubmissions(recentSubmissions);
@@ -1251,7 +1257,12 @@ const SalaryDrDashboard = () => {
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <p className="text-sm font-medium text-gray-700">Satisfaction Score:</p>
-                                  <p className="text-sm text-gray-900">{submission.satisfactionLevel || 0}/5.0</p>
+                                  <p className="text-sm text-gray-900">
+                                    {typeof submission.satisfactionLevel === 'number' 
+                                      ? `${submission.satisfactionLevel.toFixed(1)}/5.0`
+                                      : '0.0/5.0'
+                                    }
+                                  </p>
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-gray-700">Bonus/Incentives:</p>
@@ -1302,84 +1313,84 @@ const SalaryDrDashboard = () => {
               <span style={{ color: '#E94F37' }}>Dr</span> Insights
             </h2>
 
-          <div className="grid grid-cols-1 gap-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                  <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="text-base font-medium text-gray-700">Base</div>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-start min-w-0 flex-1 mr-4">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                    <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+                    </svg>
                   </div>
-              <div className="flex items-center">
-                <div className="text-2xl font-bold text-gray-900">${aggregatedStats.base.toLocaleString()}</div>
+                  <div className="text-base font-medium text-gray-700">Base</div>
+                </div>
+                <div className="flex items-center flex-shrink-0">
+                  <div className="text-xl font-bold text-gray-900">${aggregatedStats.base.toLocaleString()}</div>
                 </div>
               </div>
 
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                  <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="text-base font-medium text-gray-700">Bonuses/RVU/Incentive</div>
+              <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-start min-w-0 flex-1 mr-4">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                    <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
                   </div>
-              <div className="flex items-center gap-2">
-                <div className="text-2xl font-bold text-gray-900">${aggregatedStats.bonuses.toLocaleString()}</div>
-                <div className="text-sm text-gray-500">({aggregatedStats.bonusesPercentage}% received)</div>
+                  <div className="text-base font-medium text-gray-700 leading-tight">Bonuses/RVU/<br/>Incentive</div>
+                </div>
+                <div className="flex flex-col items-end flex-shrink-0">
+                  <div className="text-xl font-bold text-gray-900">${aggregatedStats.bonuses.toLocaleString()}</div>
+                  <div className="text-sm text-gray-500 whitespace-nowrap">({aggregatedStats.bonusesPercentage}% received)</div>
                 </div>
               </div>
 
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                  <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="text-base font-medium text-gray-700">Total Compensation</div>
+              <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-start min-w-0 flex-1 mr-4">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                    <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
                   </div>
-              <div className="flex items-center gap-2">
-                <div className="text-2xl font-bold text-gray-900">${aggregatedStats.averageSalary.toLocaleString()}</div>
-                <div className="text-sm text-gray-500">({aggregatedStats.totalSubmissions.toLocaleString()} submissions)</div>
+                  <div className="text-base font-medium text-gray-700 leading-tight">Total<br/>Compensation</div>
+                </div>
+                <div className="flex flex-col items-end flex-shrink-0">
+                  <div className="text-xl font-bold text-gray-900">${aggregatedStats.averageSalary.toLocaleString()}</div>
+                  <div className="text-sm text-gray-500 whitespace-nowrap">({aggregatedStats.totalSubmissions.toLocaleString()} submissions)</div>
                 </div>
               </div>
 
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                  <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                </div>
-                <div className="text-base font-medium text-gray-700">Workload</div>
+              <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-start min-w-0 flex-1 mr-4">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                    <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
                   </div>
-              <div className="flex items-center">
-                <div className="text-2xl font-bold text-gray-900">~{aggregatedStats.workload} hrs/week</div>
+                  <div className="text-base font-medium text-gray-700">Workload</div>
+                </div>
+                <div className="flex items-center flex-shrink-0">
+                  <div className="text-xl font-bold text-gray-900 whitespace-nowrap">~{aggregatedStats.workload} hrs/week</div>
                 </div>
               </div>
 
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                  <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                </div>
-                <div className="text-base font-medium text-gray-700">Would Choose Again</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="text-2xl font-bold text-gray-900">{aggregatedStats.satisfactionPercentage}%</div>
-              </div>
-            </div>
+              <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-start min-w-0 flex-1 mr-4">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                    <svg className="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
                   </div>
+                  <div className="text-base font-medium text-gray-700 leading-tight">Would Choose<br/>Again</div>
+                </div>
+                <div className="flex items-center flex-shrink-0">
+                  <div className="text-xl font-bold text-gray-900">{aggregatedStats.satisfactionPercentage}%</div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
     <div className="max-w-7xl mx-auto mt-12 bg-green-50 rounded-lg p-4 flex items-center gap-3">
       <div className="shrink-0">
