@@ -67,6 +67,7 @@ const SalaryDrDashboard = () => {
   const [filteredSubspecialties, setFilteredSubspecialties] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [showReferModal, setShowReferModal] = useState(false);
 
   // Add formatTimeAgo function
   const formatTimeAgo = (date) => {
@@ -1001,6 +1002,101 @@ const SalaryDrDashboard = () => {
       }
     };
 
+    const handleReferClick = (e) => {
+      e.preventDefault();
+      setShowReferModal(true);
+    };
+
+    const handleCopyLink = () => {
+      navigator.clipboard.writeText("https://www.salarydr.com")
+        .then(() => {
+          alert("Link copied to clipboard!");
+          setShowReferModal(false);
+        })
+        .catch(() => {
+          alert("Failed to copy link. Please try again.");
+        });
+    };
+
+    const handleEmailShare = () => {
+      window.location.href = "mailto:?subject=Check%20out%20SalaryDr%20-%20Physician%20Salary%20Transparency&body=I%20thought%20you%20might%20be%20interested%20in%20this%20physician%20salary%20transparency%20tool%3A%20https%3A%2F%2Fwww.salarydr.com";
+      setShowReferModal(false);
+    };
+
+    const handleTwitterShare = () => {
+      window.open(`https://twitter.com/intent/tweet?text=Check%20out%20SalaryDr%20for%20physician%20salary%20transparency%3A%20https%3A%2F%2Fwww.salarydr.com`, '_blank');
+      setShowReferModal(false);
+    };
+
+    const handleLinkedInShare = () => {
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.salarydr.com`, '_blank');
+      setShowReferModal(false);
+    };
+
+    const ReferModal = () => {
+      if (!showReferModal) return null;
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">Share SalaryDr</h3>
+              <button
+                onClick={() => setShowReferModal(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <button
+                onClick={handleCopyLink}
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Copy Link
+              </button>
+
+              <button
+                onClick={handleEmailShare}
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
+              >
+                <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Share via Email
+              </button>
+
+              <button
+                onClick={handleTwitterShare}
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+              >
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
+                </svg>
+                Share on X
+              </button>
+
+              <button
+                onClick={handleLinkedInShare}
+                className="w-full flex items-center justify-center gap-3 px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors"
+              >
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                </svg>
+                Share on LinkedIn
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     if (isLoading) {
         return (
           <div className="flex items-center justify-center min-h-screen bg-blue-50">
@@ -1385,7 +1481,7 @@ const SalaryDrDashboard = () => {
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                   </div>
-                  <div className="text-base font-medium text-gray-700 leading-tight">Would Choose<br/>Again</div>
+                  <div className="text-base font-medium text-gray-700 leading-tight">Would Choose<br/>Specialty Again</div>
                 </div>
                 <div className="flex items-center flex-shrink-0">
                   <div className="text-xl font-bold text-gray-900">{aggregatedStats.satisfactionPercentage}%</div>
@@ -1403,8 +1499,9 @@ const SalaryDrDashboard = () => {
         </svg>
       </div>
       <div className="flex-1">
-        <p className="text-lg text-green-800">Help other physicians make informed career decisions - <a href="#" className="text-green-700 hover:text-green-800 underline">refer a colleague</a> to continue growing the community.</p>
+        <p className="text-lg text-green-800">Help other physicians make informed career decisions - <a href="#" onClick={handleReferClick} className="text-green-700 hover:text-green-800 underline">refer a colleague</a> to continue growing the community.</p>
       </div>
+      <ReferModal />
     </div>
 
     <div className="max-w-7xl mx-auto mt-6">
@@ -1413,12 +1510,12 @@ const SalaryDrDashboard = () => {
           <h2 className="text-4xl font-bold mb-4">Know Your Worth. Stay Anonymous.</h2>
           <p className="mb-8 text-lg max-w-3xl mx-auto">Join thousands of physicians who have contributed salary data to help the community make informed career decisions.</p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <a 
-              href="https://www.salarydr.com/submit-salary"
-              className="bg-white text-indigo-900 hover:bg-blue-50 px-8 py-3 rounded-md font-medium text-lg"
+            <button
+              onClick={() => window.location.href = '/submit-salary'}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200"
             >
-                Submit Your Salary
-            </a>
+              Submit Your Salary
+            </button>
             </div>
           </div>
       </div>
