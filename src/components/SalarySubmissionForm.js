@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
 const SalarySubmissionForm = () => {
@@ -26,6 +26,18 @@ const SalarySubmissionForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
 
+  const [specialtySearch, setSpecialtySearch] = useState('');
+  const [subspecialtySearch, setSubspecialtySearch] = useState('');
+  const [stateSearch, setStateSearch] = useState('');
+  const [showSpecialtyDropdown, setShowSpecialtyDropdown] = useState(false);
+  const [showSubspecialtyDropdown, setShowSubspecialtyDropdown] = useState(false);
+  const [showStateDropdown, setShowStateDropdown] = useState(false);
+
+  const [errors, setErrors] = useState({
+    baseSalary: '',
+    bonusIncentives: ''
+  });
+
   const handleNext = () => {
     setStep(step + 1);
   };
@@ -34,15 +46,61 @@ const SalarySubmissionForm = () => {
     setStep(step - 1);
   };
 
+  const practiceOptions = [
+    "Private Practice",
+    "Academic",
+    "Hospital Employed"
+  ];
+
+  // Add formatNumber helper function
+  const formatNumber = (value) => {
+    // Remove all non-digits
+    const number = value.replace(/[^\d]/g, '');
+    // Add commas for thousands
+    return number.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  };
+
+  // Add parseNumber helper function
+  const parseNumber = (value) => {
+    // Remove all non-digits
+    return value.replace(/[^\d]/g, '');
+  };
+
+  // Add validateSalaryFields function before handleSubmit
+  const validateSalaryFields = () => {
+    const newErrors = {};
+    const baseSalaryNum = parseFloat(parseNumber(formData.baseSalary));
+    const bonusNum = parseFloat(parseNumber(formData.bonusIncentives));
+
+    // Validate base salary
+    if (baseSalaryNum > 10000000) {
+      newErrors.baseSalary = 'Base salary cannot exceed $10,000,000';
+    }
+
+    // Validate bonus
+    if (formData.bonusIncentives && bonusNum !== 0 && bonusNum < 10000) {
+      newErrors.bonusIncentives = 'Bonus must be either $0 or greater than $9,999';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate fields before submitting
+    if (!validateSalaryFields()) {
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
-      // Calculate total compensation if not provided
-      const totalComp = formData.totalCompensation || 
-        (parseFloat(formData.baseSalary.replace(/[^0-9.]/g, '')) + 
-         parseFloat(formData.bonusIncentives.replace(/[^0-9.]/g, '')));
+      // Parse the numbers before submitting
+      const baseSalary = parseFloat(parseNumber(formData.baseSalary));
+      const bonusIncentives = parseFloat(parseNumber(formData.bonusIncentives));
+      const totalComp = formData.totalCompensation || (baseSalary + bonusIncentives);
 
       const { data, error } = await supabase
         .from('salary_submissions')
@@ -55,8 +113,8 @@ const SalarySubmissionForm = () => {
           geographic_location: formData.location.region,
           practice_setting: formData.practiceType,
           total_compensation: totalComp,
-          base_salary: parseFloat(formData.baseSalary.replace(/[^0-9.]/g, '')),
-          bonus_incentives: parseFloat(formData.bonusIncentives.replace(/[^0-9.]/g, '')),
+          base_salary: baseSalary,
+          bonus_incentives: bonusIncentives,
           hours_worked: parseInt(formData.hoursWorkedPerWeek),
           call_schedule: formData.callSchedule,
           satisfaction_level: parseInt(formData.satisfactionLevel),
@@ -99,11 +157,6 @@ const SalarySubmissionForm = () => {
     "Pathology", "Pediatrics", "Psychiatry", "Radiology", "Surgery", "Urology"
   ];
 
-  const practiceOptions = [
-    "Academic Medical Center", "Hospital Employed", "Private Practice",
-    "Government/VA", "HMO/Kaiser", "Telemedicine", "Locum Tenens", "Other"
-  ];
-
   const regionOptions = [
     "Northeast", "Southeast", "Midwest", "Southwest", "West", "Northwest"
   ];
@@ -120,6 +173,93 @@ const SalarySubmissionForm = () => {
     "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", 
     "West Virginia", "Wisconsin", "Wyoming"
   ];
+
+  // Updated specialty options with subspecialties
+  const specialtyMapping = {
+    "Anesthesiology": [
+      "Cardiac", "Critical Care", "Pain Management", "Pediatric", "Regional"
+    ],
+    "Cardiology": [
+      "Electrophysiology", "Heart Failure", "Interventional", "Non-invasive"
+    ],
+    "Surgery": [
+      "Bariatric", "Cardiac", "Colorectal", "General", "Neurosurgery", "Orthopedic", 
+      "Pediatric", "Plastic", "Thoracic", "Transplant", "Trauma", "Vascular"
+    ],
+    "Internal Medicine": [
+      "Allergy & Immunology", "Endocrinology", "Gastroenterology", "Geriatrics",
+      "Hematology/Oncology", "Infectious Disease", "Nephrology", "Pulmonology",
+      "Rheumatology"
+    ],
+    "Pediatrics": [
+      "Adolescent Medicine", "Cardiology", "Critical Care", "Emergency Medicine",
+      "Endocrinology", "Gastroenterology", "Hematology/Oncology", "Neonatology",
+      "Neurology", "Pulmonology"
+    ],
+    // Add more specialties and their subspecialties as needed
+  };
+
+  // Filter specialties based on search
+  const filteredSpecialties = specialtyOptions.filter(specialty =>
+    specialty.toLowerCase().includes(specialtySearch.toLowerCase())
+  );
+
+  // Filter subspecialties based on selected specialty and search
+  const filteredSubspecialties = formData.specialty
+    ? (specialtyMapping[formData.specialty] || []).filter(subspecialty =>
+        subspecialty.toLowerCase().includes(subspecialtySearch.toLowerCase())
+      )
+    : [];
+
+  // Filter states based on search
+  const filteredStates = stateOptions.filter(state =>
+    state.toLowerCase().includes(stateSearch.toLowerCase())
+  );
+
+  // Handle specialty selection
+  const handleSpecialtySelect = (specialty) => {
+    setFormData({
+      ...formData,
+      specialty,
+      subspecialty: '' // Reset subspecialty when specialty changes
+    });
+    setSpecialtySearch(specialty);
+    setShowSpecialtyDropdown(false);
+  };
+
+  // Handle subspecialty selection
+  const handleSubspecialtySelect = (subspecialty) => {
+    setFormData({
+      ...formData,
+      subspecialty
+    });
+    setSubspecialtySearch(subspecialty);
+    setShowSubspecialtyDropdown(false);
+  };
+
+  // Handle state selection
+  const handleStateSelect = (state) => {
+    setFormData({
+      ...formData,
+      location: { ...formData.location, state }
+    });
+    setStateSearch(state);
+    setShowStateDropdown(false);
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.dropdown-container')) {
+        setShowSpecialtyDropdown(false);
+        setShowSubspecialtyDropdown(false);
+        setShowStateDropdown(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   return (
     <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
@@ -153,23 +293,69 @@ const SalarySubmissionForm = () => {
       <form onSubmit={step === 3 ? handleSubmit : handleNext} className="p-6 pt-0">
         {step === 1 && (
           <div className="space-y-6">
-            <div>
+            <div className="dropdown-container relative">
               <label className="block text-lg font-medium text-blue-700 mb-2">
                 Specialty Type (Required)
               </label>
-              <select
+              <input
+                type="text"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.specialty}
-                onChange={(e) => setFormData({...formData, specialty: e.target.value})}
+                value={specialtySearch}
+                onChange={(e) => {
+                  setSpecialtySearch(e.target.value);
+                  setShowSpecialtyDropdown(true);
+                }}
+                onClick={() => setShowSpecialtyDropdown(true)}
+                placeholder="Search for specialty..."
                 required
-              >
-                <option value="">Select Specialty Type</option>
-                {specialtyOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
+              />
+              {showSpecialtyDropdown && filteredSpecialties.length > 0 && (
+                <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {filteredSpecialties.map((specialty) => (
+                    <li
+                      key={specialty}
+                      className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                      onClick={() => handleSpecialtySelect(specialty)}
+                    >
+                      {specialty}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-            
+
+            {formData.specialty && specialtyMapping[formData.specialty] && (
+              <div className="dropdown-container relative">
+                <label className="block text-lg font-medium text-blue-700 mb-2">
+                  Subspecialty (Optional)
+                </label>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={subspecialtySearch}
+                  onChange={(e) => {
+                    setSubspecialtySearch(e.target.value);
+                    setShowSubspecialtyDropdown(true);
+                  }}
+                  onClick={() => setShowSubspecialtyDropdown(true)}
+                  placeholder="Search for subspecialty..."
+                />
+                {showSubspecialtyDropdown && filteredSubspecialties.length > 0 && (
+                  <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {filteredSubspecialties.map((subspecialty) => (
+                      <li
+                        key={subspecialty}
+                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                        onClick={() => handleSubspecialtySelect(subspecialty)}
+                      >
+                        {subspecialty}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
             <div>
               <label className="block text-lg font-medium text-blue-700 mb-2">
                 Years of Experience (Required)
@@ -187,24 +373,35 @@ const SalarySubmissionForm = () => {
               </div>
             </div>
             
-            <div>
+            <div className="dropdown-container relative">
               <label className="block text-lg font-medium text-blue-700 mb-2">
                 State (Required)
               </label>
-              <select
+              <input
+                type="text"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.location.state}
-                onChange={(e) => setFormData({
-                  ...formData, 
-                  location: {...formData.location, state: e.target.value}
-                })}
+                value={stateSearch}
+                onChange={(e) => {
+                  setStateSearch(e.target.value);
+                  setShowStateDropdown(true);
+                }}
+                onClick={() => setShowStateDropdown(true)}
+                placeholder="Search for state..."
                 required
-              >
-                <option value="">Select State</option>
-                {stateOptions.map(state => (
-                  <option key={state} value={state}>{state}</option>
-                ))}
-              </select>
+              />
+              {showStateDropdown && filteredStates.length > 0 && (
+                <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {filteredStates.map((state) => (
+                    <li
+                      key={state}
+                      className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                      onClick={() => handleStateSelect(state)}
+                    >
+                      {state}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             
             <div>
@@ -259,13 +456,20 @@ const SalarySubmissionForm = () => {
                 <span className="absolute left-3 top-3 text-gray-500">$</span>
                 <input
                   type="text"
-                  className="w-full p-3 pl-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full p-3 pl-6 border ${errors.baseSalary ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   value={formData.baseSalary}
-                  onChange={(e) => setFormData({...formData, baseSalary: e.target.value})}
+                  onChange={(e) => {
+                    const formatted = formatNumber(e.target.value);
+                    setFormData({...formData, baseSalary: formatted});
+                    setErrors({...errors, baseSalary: ''});
+                  }}
                   placeholder="Enter base salary"
                   required
                 />
               </div>
+              {errors.baseSalary && (
+                <p className="mt-1 text-red-500 text-sm">{errors.baseSalary}</p>
+              )}
             </div>
             
             <div>
@@ -276,12 +480,19 @@ const SalarySubmissionForm = () => {
                 <span className="absolute left-3 top-3 text-gray-500">$</span>
                 <input
                   type="text"
-                  className="w-full p-3 pl-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full p-3 pl-6 border ${errors.bonusIncentives ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   value={formData.bonusIncentives}
-                  onChange={(e) => setFormData({...formData, bonusIncentives: e.target.value})}
+                  onChange={(e) => {
+                    const formatted = formatNumber(e.target.value);
+                    setFormData({...formData, bonusIncentives: formatted});
+                    setErrors({...errors, bonusIncentives: ''});
+                  }}
                   placeholder="Enter bonus/incentives"
                 />
               </div>
+              {errors.bonusIncentives && (
+                <p className="mt-1 text-red-500 text-sm">{errors.bonusIncentives}</p>
+              )}
             </div>
             
             <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
@@ -306,7 +517,7 @@ const SalarySubmissionForm = () => {
           <div className="space-y-6">
             <div>
               <label className="block text-lg font-medium text-blue-700 mb-2">
-                Average Hours Worked Per Week (Optional)
+                Average Hours Worked Per Week (Required)
               </label>
               <input
                 type="number"
@@ -314,6 +525,7 @@ const SalarySubmissionForm = () => {
                 value={formData.hoursWorkedPerWeek}
                 onChange={(e) => setFormData({...formData, hoursWorkedPerWeek: e.target.value})}
                 placeholder="Hours"
+                required
               />
             </div>
             
@@ -321,12 +533,6 @@ const SalarySubmissionForm = () => {
               <label className="block text-lg font-medium text-blue-700 mb-2">
                 Job Satisfaction Level (Required)
               </label>
-              <input
-                type="text"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value="1 (Low) - 5 (High)"
-                readOnly
-              />
               <input
                 type="range"
                 min="1"
@@ -336,28 +542,37 @@ const SalarySubmissionForm = () => {
                 value={formData.satisfactionLevel}
                 onChange={(e) => setFormData({...formData, satisfactionLevel: e.target.value})}
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>1</span>
-                <span>2</span>
-                <span>3</span>
-                <span>4</span>
-                <span>5</span>
+              <div className="flex justify-between text-sm text-gray-500 mt-1">
+                <div className="text-center">
+                  <div>1</div>
+                  <div>Low</div>
+                </div>
+                <div className="text-center">2</div>
+                <div className="text-center">
+                  <div>3</div>
+                  <div>Average</div>
+                </div>
+                <div className="text-center">4</div>
+                <div className="text-center">
+                  <div>5</div>
+                  <div>High</div>
+                </div>
               </div>
             </div>
             
             <div>
               <label className="block text-lg font-medium text-blue-700 mb-2">
-                Would you choose this specialty again? (Optional)
+                Would you choose this specialty again? (Required)
               </label>
               <select
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={formData.wouldChooseAgain}
                 onChange={(e) => setFormData({...formData, wouldChooseAgain: e.target.value})}
+                required
               >
                 <option value="">Select an option</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
-                <option value="unsure">Unsure</option>
               </select>
             </div>
             
