@@ -4,9 +4,9 @@ import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { supabase } from './supabaseClient';
-import { PRACTICE_TYPES, REGIONS } from './types';
-import { STATES } from './constants';
+import { supabase } from '../supabaseClient';
+import { PRACTICE_TYPES, REGIONS } from '../types';
+import { STATES } from '../constants';
 
 // Helper function to parse currency values
 const parseCurrency = (value) => {
