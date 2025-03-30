@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
@@ -9,12 +10,12 @@ const TakeHomePayCalculator = () => {
     grossSalary: '',
     state: '',
     filingStatus: 'single',
-    retirementContribution: '0',
-    healthInsurance: '0',
-    otherDeductions: '0',
-    additionalIncome: '0',
-    bonuses: '0',
-    overtime: '0'
+    retirementContribution: '',
+    healthInsurance: '',
+    otherDeductions: '',
+    additionalIncome: '',
+    bonuses: '',
+    overtime: ''
   });
 
   const [results, setResults] = useState(null);
@@ -117,15 +118,16 @@ const TakeHomePayCalculator = () => {
   };
 
   const calculateTakeHomePay = () => {
-    const grossSalary = parseFloat(formData.grossSalary) || 0;
+    // Parse all numeric inputs, defaulting to 0 if empty or invalid
+    const grossSalary = parseFloat(formData.grossSalary.replace(/[^0-9.]/g, '')) || 0;
     const state = formData.state;
     const filingStatus = formData.filingStatus;
-    const retirementContribution = parseFloat(formData.retirementContribution) || 0;
-    const healthInsurance = parseFloat(formData.healthInsurance) || 0;
-    const otherDeductions = parseFloat(formData.otherDeductions) || 0;
-    const additionalIncome = parseFloat(formData.additionalIncome) || 0;
-    const bonuses = parseFloat(formData.bonuses) || 0;
-    const overtime = parseFloat(formData.overtime) || 0;
+    const retirementContribution = parseFloat(formData.retirementContribution.replace(/[^0-9.]/g, '')) || 0;
+    const healthInsurance = parseFloat(formData.healthInsurance.replace(/[^0-9.]/g, '')) || 0;
+    const otherDeductions = parseFloat(formData.otherDeductions.replace(/[^0-9.]/g, '')) || 0;
+    const additionalIncome = parseFloat(formData.additionalIncome.replace(/[^0-9.]/g, '')) || 0;
+    const bonuses = parseFloat(formData.bonuses.replace(/[^0-9.]/g, '')) || 0;
+    const overtime = parseFloat(formData.overtime.replace(/[^0-9.]/g, '')) || 0;
 
     // Calculate total income
     const totalIncome = grossSalary + additionalIncome + bonuses + overtime;
@@ -144,7 +146,7 @@ const TakeHomePayCalculator = () => {
     const stateTax = taxableIncome * stateTaxRate;
 
     // Calculate FICA (Social Security and Medicare)
-    const socialSecurityTax = Math.min(taxableIncome, 168600) * 0.062;
+    const socialSecurityTax = Math.min(taxableIncome, 168600) * 0.062; // 2024 Social Security wage base
     const medicareTax = taxableIncome * 0.0145;
     const additionalMedicareTax = taxableIncome > 200000 ? (taxableIncome - 200000) * 0.009 : 0;
     const ficaTax = socialSecurityTax + medicareTax + additionalMedicareTax;
@@ -156,20 +158,20 @@ const TakeHomePayCalculator = () => {
     const takeHomePay = totalIncome - preTaxDeductions - totalTaxes;
 
     // Calculate effective tax rate
-    const effectiveTaxRate = (totalTaxes / totalIncome) * 100;
+    const effectiveTaxRate = totalIncome > 0 ? ((totalTaxes / totalIncome) * 100).toFixed(1) : 0;
 
     setResults({
-      totalIncome,
-      preTaxDeductions,
-      taxableIncome,
-      federalTax,
-      stateTax,
-      ficaTax,
-      totalTaxes,
-      takeHomePay,
+      totalIncome: Math.round(totalIncome),
+      preTaxDeductions: Math.round(preTaxDeductions),
+      taxableIncome: Math.round(taxableIncome),
+      federalTax: Math.round(federalTax),
+      stateTax: Math.round(stateTax),
+      ficaTax: Math.round(ficaTax),
+      totalTaxes: Math.round(totalTaxes),
+      takeHomePay: Math.round(takeHomePay),
       effectiveTaxRate,
-      monthlyTakeHome: takeHomePay / 12,
-      biweeklyTakeHome: takeHomePay / 26
+      monthlyTakeHome: Math.round(takeHomePay / 12),
+      biweeklyTakeHome: Math.round(takeHomePay / 26)
     });
   };
 
@@ -178,25 +180,31 @@ const TakeHomePayCalculator = () => {
     const numericValue = value.replace(/[^0-9.]/g, '');
     if (!numericValue) return '';
     
-    // Format with commas and dollar sign
+    // Parse the number and format with commas and dollar sign
+    const number = parseFloat(numericValue);
+    if (isNaN(number)) return '';
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       maximumFractionDigits: 0
-    }).format(numericValue);
+    }).format(number);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
     if (name === 'state' || name === 'filingStatus') {
       setFormData(prev => ({
         ...prev,
         [name]: value
       }));
     } else {
+      // For currency inputs, only format if there's a value
+      const formattedValue = value ? formatInputCurrency(value) : '';
       setFormData(prev => ({
         ...prev,
-        [name]: formatInputCurrency(value)
+        [name]: formattedValue
       }));
     }
   };
@@ -211,8 +219,20 @@ const TakeHomePayCalculator = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <Helmet>
+        <title>Physician Take-Home Pay Calculator | SalaryDr</title>
+        <meta name="description" content="Calculate your physician take-home pay after taxes and deductions. Free calculator for doctors to estimate net income, tax burden, and monthly/bi-weekly pay." />
+        <meta name="keywords" content="physician salary calculator, doctor take home pay, medical income calculator, physician tax calculator, doctor salary after taxes" />
+        <link rel="canonical" href="https://www.salarydr.com/calculator" />
+        <meta property="og:title" content="Physician Take-Home Pay Calculator | SalaryDr" />
+        <meta property="og:description" content="Calculate your physician take-home pay after taxes and deductions. Free calculator for doctors to estimate net income, tax burden, and monthly/bi-weekly pay." />
+        <meta property="og:url" content="https://www.salarydr.com/calculator" />
+        <meta name="twitter:title" content="Physician Take-Home Pay Calculator | SalaryDr" />
+        <meta name="twitter:description" content="Calculate your physician take-home pay after taxes and deductions. Free calculator for doctors to estimate net income, tax burden, and monthly/bi-weekly pay." />
+      </Helmet>
+
       {/* Navigation */}
-      <nav className="w-full p-6">
+      <nav className="w-full p-6" role="navigation" aria-label="Main navigation">
         <div className="container mx-auto flex justify-between items-center">
           <Link 
             to="/" 
@@ -241,16 +261,23 @@ const TakeHomePayCalculator = () => {
         </div>
       </nav>
 
-      <div className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-900">
-            Physician Take-Home Pay Calculator
-          </h1>
-          <p className="text-xl text-gray-600 text-center mb-12">
-            Calculate your estimated take-home pay after taxes and deductions
-          </p>
+          <header>
+            <h1 className="text-4xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-900">
+              Physician Take-Home Pay Calculator
+            </h1>
+            <div className="prose prose-lg mx-auto text-center mb-12">
+              <p className="text-xl text-gray-600">
+                Calculate your estimated take-home pay after taxes and deductions. Our calculator considers federal taxes, state taxes, FICA, retirement contributions, and other deductions to give you an accurate estimate of your net income.
+              </p>
+              <p className="text-lg text-gray-600 mt-4">
+                Perfect for physicians planning their finances, negotiating contracts, or comparing job offers across different states.
+              </p>
+            </div>
+          </header>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+          <article className="bg-white rounded-2xl shadow-xl p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Input Form */}
               <div className="space-y-6">
@@ -531,7 +558,7 @@ const TakeHomePayCalculator = () => {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600">Effective Tax Rate:</span>
-                          <span className="font-semibold text-gray-900">{results.effectiveTaxRate.toFixed(1)}%</span>
+                          <span className="font-semibold text-gray-900">{results.effectiveTaxRate}%</span>
                         </div>
                       </div>
                     </div>
@@ -561,15 +588,84 @@ const TakeHomePayCalculator = () => {
                 )}
               </div>
             </div>
-          </div>
+          </article>
 
-          {/* Disclaimer */}
-          <div className="mt-8 text-center text-sm text-gray-500">
-            <p>This calculator provides estimates only. Actual take-home pay may vary based on additional factors not included in this calculation.</p>
-            <p className="mt-2">For more accurate results, consult with a tax professional.</p>
-          </div>
+          {/* New SEO-friendly content section */}
+          <section className="mt-16 prose prose-lg mx-auto">
+            <h2 className="text-3xl font-semibold text-gray-900 mb-6">
+              Understanding Your Physician Take-Home Pay
+            </h2>
+            <p>
+              As a physician, understanding your take-home pay is crucial for financial planning and career decisions. Your net income is affected by various factors including:
+            </p>
+            <ul className="list-disc pl-6 mt-4 space-y-2">
+              <li>Federal income tax brackets and rates</li>
+              <li>State tax variations across different locations</li>
+              <li>FICA taxes (Social Security and Medicare)</li>
+              <li>Pre-tax deductions like retirement contributions and health insurance</li>
+              <li>Additional income sources such as bonuses and overtime</li>
+            </ul>
+
+            <h3 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">
+              How to Use This Calculator
+            </h3>
+            <ol className="list-decimal pl-6 space-y-2">
+              <li>Enter your gross annual salary</li>
+              <li>Select your state of residence</li>
+              <li>Choose your tax filing status</li>
+              <li>Input any pre-tax deductions and additional income</li>
+              <li>Click "Calculate Take-Home Pay" to see your results</li>
+            </ol>
+
+            <h3 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">
+              Why Accurate Income Calculation Matters
+            </h3>
+            <p>
+              Having a clear understanding of your take-home pay helps you:
+            </p>
+            <ul className="list-disc pl-6 mt-4 space-y-2">
+              <li>Make informed decisions when comparing job offers</li>
+              <li>Plan your monthly budget effectively</li>
+              <li>Optimize your tax strategy and deductions</li>
+              <li>Evaluate opportunities in different states</li>
+              <li>Negotiate compensation packages with confidence</li>
+            </ul>
+          </section>
+
+          {/* FAQ Section for SEO */}
+          <section className="mt-16">
+            <h2 className="text-3xl font-semibold text-gray-900 mb-8">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  How accurate is the take-home pay calculator?
+                </h3>
+                <p className="text-gray-600">
+                  Our calculator provides estimates based on current tax rates and standard deductions. While it's highly accurate for basic calculations, individual circumstances may vary. We recommend consulting with a tax professional for precise planning.
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  What tax rates are used in the calculations?
+                </h3>
+                <p className="text-gray-600">
+                  We use 2024 federal tax brackets, current state tax rates, and updated FICA tax rates including Social Security (6.2% up to $168,600) and Medicare (1.45% plus 0.9% additional Medicare tax for high earners).
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  How often is the calculator updated?
+                </h3>
+                <p className="text-gray-600">
+                  We update our calculator annually to reflect the latest tax brackets, deduction limits, and state tax rates. The current version includes all 2024 tax year updates.
+                </p>
+              </div>
+            </div>
+          </section>
         </div>
-      </div>
+      </main>
 
       {/* Footer */}
       <footer className="bg-blue-50 py-12 mt-12">
