@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
+import Footer from '../components/Footer';
 
 const FlipCard = ({ digit, isFlipping }) => {
   return (
     <div className="relative w-16 h-24 mx-1">
-      <div className={`flip-card bg-gray-900 rounded-lg ${isFlipping ? 'animate-flip' : ''}`}>
+      <div className={`flip-card bg-gray-900 rounded-lg h-full w-full ${isFlipping ? 'animate-flip' : ''}`}>
         <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-white">
           {digit}
         </div>
@@ -33,7 +34,7 @@ const Home = () => {
   }, []);
 
   // Convert count to array of digits
-  const digits = String(count).split('').map(Number);
+  const digits = String(count).padStart(4, '0').split('').map(Number);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -95,22 +96,61 @@ const Home = () => {
             </Link>
           </div>
 
-          {/* Counter Section */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-              Physician Salary Submissions
-            </h2>
-            <div className="flex justify-center mb-4">
-              {digits.map((digit, index) => (
-                <FlipCard 
-                  key={index} 
-                  digit={digit} 
-                  isFlipping={isFlipping && index === digits.length - 1}
-                />
-              ))}
+          {/* Social Proof Section */}
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
+            {/* Submissions Counter */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center justify-center">
+              <div className="flex justify-center items-center mb-3">
+                {digits.map((digit, index) => (
+                  <FlipCard 
+                    key={`${index}-${digit}`}
+                    digit={digit} 
+                    isFlipping={isFlipping && index === digits.length - 1}
+                  />
+                ))}
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mt-2">
+                Salary Submissions
+              </h3>
+              <p className="text-gray-600 text-sm">
+                and counting
+              </p>
             </div>
-            <p className="text-gray-600">
-              anonymous contributions and counting
+
+            {/* Specialties Coverage */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center justify-center">
+              <div className="text-4xl font-bold text-blue-600 mb-3">
+                30+
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800">
+                Medical Specialties
+              </h3>
+              <p className="text-gray-600 text-sm text-center">
+                comprehensive salary data across specialties
+              </p>
+            </div>
+
+            {/* Community Stats */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center justify-center">
+              <div className="text-4xl font-bold text-blue-600 mb-3">
+                5.5K+
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800">
+                Community Members
+              </h3>
+              <p className="text-gray-600 text-sm text-center">
+                following us on social media
+              </p>
+            </div>
+          </div>
+
+          {/* Trust Banner */}
+          <div className="bg-blue-50 rounded-xl p-4 max-w-3xl mx-auto mb-16 flex items-center justify-center gap-3">
+            <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <p className="text-blue-800 font-medium">
+              Trusted by physicians nationwide for anonymous salary insights
             </p>
           </div>
         </div>
@@ -139,55 +179,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-blue-50 py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-16">
-            {/* Legal Links */}
-            <div className="space-y-2">
-              <Link to="/privacy-policy" className="block text-[#2D3748] hover:text-blue-600 text-lg">
-                Privacy Policy
-              </Link>
-              <Link to="/terms" className="block text-[#2D3748] hover:text-blue-600 text-lg">
-                Terms and Conditions
-              </Link>
-            </div>
-            
-            {/* Social Links */}
-            <div className="space-y-2">
-              <a 
-                href="https://www.instagram.com/salarydr_/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="block text-[#2D3748] hover:text-blue-600 text-lg"
-              >
-                Instagram
-              </a>
-              <a 
-                href="https://x.com/salarydr" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="block text-[#2D3748] hover:text-blue-600 text-lg"
-              >
-                X/Twitter
-              </a>
-              <a 
-                href="https://www.tiktok.com/@salarydr" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="block text-[#2D3748] hover:text-blue-600 text-lg"
-              >
-                TikTok
-              </a>
-            </div>
-          </div>
-
-          {/* Copyright */}
-          <div className="pt-8 mt-8 border-t border-gray-200">
-            <p className="text-[#2D3748] text-lg">© 2025 All Rights Reserved by salaryDr.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Animation Styles */}
       <style>{`

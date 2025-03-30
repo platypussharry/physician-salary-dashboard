@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from './supabaseClient';
 import { PRACTICE_TYPES, REGIONS } from './types';
+import Footer from './components/Footer';
 
 // Helper function to parse currency values
 const parseCurrency = (value) => {
@@ -1906,6 +1907,9 @@ const SalaryDrDashboard = () => {
         </div>
       </div>
     </div>
+  </div>
+  <Footer />
+</div>
   );
 };
 
