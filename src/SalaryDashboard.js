@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import '@fontsource/outfit/400.css';
+import '@fontsource/outfit/500.css';
+import '@fontsource/outfit/600.css';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from './supabaseClient';
 import { PRACTICE_TYPES, REGIONS } from './types';
-import Footer from './components/Footer';
 
 // Helper function to parse currency values
 const parseCurrency = (value) => {
@@ -1194,8 +1197,18 @@ const SalaryDrDashboard = () => {
     
       return (
         <div className="bg-blue-50 min-h-screen p-4">
+          {/* Header with Logo */}
           <header className="max-w-7xl mx-auto mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Physician Salary Explorer</h1>
+            <div className="flex justify-between items-center mb-2">
+              <h1 className="text-3xl font-bold text-gray-900">Physician Salary Explorer</h1>
+              <Link 
+                to="/" 
+                className="inline-block text-[2rem] tracking-normal font-['Outfit']"
+              >
+                <span className="text-[#4169E1] font-[400]">salary</span>
+                <span className="text-[#E94E4A] font-[500]">Dr</span>
+              </Link>
+            </div>
             <p className="text-gray-600 mt-2">Explore real physician salary data by specialty, location, and practice type. Updated daily with anonymous submissions from verified physicians.</p>
           </header>
     
@@ -1907,9 +1920,6 @@ const SalaryDrDashboard = () => {
         </div>
       </div>
     </div>
-  </div>
-  <Footer />
-</div>
   );
 };
 
