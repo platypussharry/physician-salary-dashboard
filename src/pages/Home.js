@@ -4,36 +4,20 @@ import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
 
-const FlipCard = ({ digit, isFlipping }) => {
-  return (
-    <div className="relative w-16 h-24 mx-1">
-      <div className={`flip-card bg-gray-900 rounded-lg h-full w-full ${isFlipping ? 'animate-flip' : ''}`}>
-        <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-white">
-          {digit}
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
-      </div>
-    </div>
-  );
-};
-
 const Home = () => {
-  const [count, setCount] = useState(2318); // Starting count
-  const [isFlipping, setIsFlipping] = useState(false);
+  const [count, setCount] = useState(2308); // Start at 2,308 (2,318 - 10)
 
   useEffect(() => {
     // Simulate counter updates
     const interval = setInterval(() => {
-      setCount(prev => prev + 1);
-      setIsFlipping(true);
-      setTimeout(() => setIsFlipping(false), 600);
+      setCount(prev => {
+        if (prev >= 2318) return 2318; // Stop at actual total
+        return prev + 1;
+      });
     }, 5000); // Update every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
-
-  // Convert count to array of digits
-  const digits = String(count).padStart(4, '0').split('').map(Number);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -59,7 +43,7 @@ const Home = () => {
             </Link>
             <Link
               to="/submit-salary"
-              className="text-xl font-semibold px-6 py-3 bg-[#2D3748] text-white rounded-lg hover:bg-[#1A202C] transition-colors"
+              className="text-xl font-semibold px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg"
             >
               Add a Salary
             </Link>
@@ -96,48 +80,42 @@ const Home = () => {
           </div>
 
           {/* Social Proof Section */}
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
+          <div className="grid md:grid-cols-3 gap-4 sm:gap-8 max-w-5xl mx-auto mb-16">
             {/* Submissions Counter */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center justify-center">
-              <div className="flex justify-center items-center mb-3">
-                {digits.map((digit, index) => (
-                  <FlipCard 
-                    key={`${index}-${digit}`}
-                    digit={digit} 
-                    isFlipping={isFlipping && index === digits.length - 1}
-                  />
-                ))}
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 flex flex-col items-center justify-center">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-3">
+                {count.toLocaleString()}
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mt-2">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
                 Salary Submissions
               </h3>
-              <p className="text-gray-600 text-sm">
+              <p className="text-sm text-gray-600">
                 and counting
               </p>
             </div>
 
             {/* Specialties Coverage */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center justify-center">
-              <div className="text-4xl font-bold text-blue-600 mb-3">
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 flex flex-col items-center justify-center">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-3">
                 30+
               </div>
-              <h3 className="text-xl font-semibold text-gray-800">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
                 Medical Specialties
               </h3>
-              <p className="text-gray-600 text-sm text-center">
+              <p className="text-sm text-gray-600 text-center">
                 comprehensive salary data across specialties
               </p>
             </div>
 
             {/* Community Stats */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center justify-center">
-              <div className="text-4xl font-bold text-blue-600 mb-3">
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 flex flex-col items-center justify-center">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-3">
                 5.5K+
               </div>
-              <h3 className="text-xl font-semibold text-gray-800">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
                 Community Members
               </h3>
-              <p className="text-gray-600 text-sm text-center">
+              <p className="text-sm text-gray-600 text-center">
                 following us on social media
               </p>
             </div>
@@ -151,6 +129,71 @@ const Home = () => {
             <p className="text-blue-800 font-medium">
               Trusted by physicians nationwide for anonymous salary insights
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Why Salary Transparency Matters Section */}
+      <div className="bg-white py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-900">
+            Why Salary Transparency Matters
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Medical School Debt */}
+            <div className="bg-blue-50 rounded-2xl p-8">
+              <div className="text-4xl mb-4">$250K+</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Average Medical School Debt</h3>
+              <p className="text-gray-600">With rising education costs, salary transparency helps physicians make informed decisions about their financial future and career path.</p>
+            </div>
+
+            {/* Gender Pay Gap */}
+            <div className="bg-blue-50 rounded-2xl p-8">
+              <div className="text-4xl mb-4">25%</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Gender Pay Gap</h3>
+              <p className="text-gray-600">Transparency helps identify and address pay disparities, ensuring fair compensation regardless of gender or background.</p>
+            </div>
+
+            {/* Career Satisfaction */}
+            <div className="bg-blue-50 rounded-2xl p-8">
+              <div className="text-4xl mb-4">85%</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Career Satisfaction</h3>
+              <p className="text-gray-600">Physicians who feel fairly compensated report higher job satisfaction and better work-life balance.</p>
+            </div>
+
+            {/* Negotiation Power */}
+            <div className="bg-blue-50 rounded-2xl p-8">
+              <div className="text-4xl mb-4">40%</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Negotiation Success Rate</h3>
+              <p className="text-gray-600">Access to market data increases successful salary negotiations and helps physicians advocate for fair compensation.</p>
+            </div>
+
+            {/* Specialty Choice */}
+            <div className="bg-blue-50 rounded-2xl p-8">
+              <div className="text-4xl mb-4">60%</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Better Career Decisions</h3>
+              <p className="text-gray-600">Salary transparency helps medical students and residents make more informed decisions about their specialty choice.</p>
+            </div>
+
+            {/* Practice Setting */}
+            <div className="bg-blue-50 rounded-2xl p-8">
+              <div className="text-4xl mb-4">3x</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Salary Variation</h3>
+              <p className="text-gray-600">Compensation can vary significantly between practice settings. Transparency helps physicians find the right fit.</p>
+            </div>
+          </div>
+
+          {/* Call to Action */}
+          <div className="mt-12 text-center">
+            <p className="text-xl text-gray-700 mb-6">
+              Join thousands of physicians who are making salary transparency a reality
+            </p>
+            <Link
+              to="/submit-salary"
+              className="inline-block px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-lg font-semibold transition-all transform hover:scale-105 shadow-lg"
+            >
+              Share Your Salary
+            </Link>
           </div>
         </div>
       </div>
@@ -233,22 +276,6 @@ const Home = () => {
           </div>
         </div>
       </footer>
-
-      {/* Animation Styles */}
-      <style>{`
-        @keyframes flip {
-          0% { transform: rotateX(0deg); }
-          100% { transform: rotateX(360deg); }
-        }
-        .animate-flip {
-          animation: flip 0.6s ease-in-out;
-          transform-origin: bottom;
-        }
-        .flip-card {
-          perspective: 1000px;
-          transform-style: preserve-3d;
-        }
-      `}</style>
     </div>
   );
 };

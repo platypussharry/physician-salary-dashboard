@@ -1200,7 +1200,15 @@ const SalaryDrDashboard = () => {
           {/* Header with Logo */}
           <header className="max-w-7xl mx-auto mb-6">
             <div className="flex justify-between items-center mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">Physician Salary Explorer</h1>
+              <div className="flex items-center gap-8">
+                <h1 className="text-3xl font-bold text-gray-900">Physician Salary Explorer</h1>
+                <Link 
+                  to="/calculator" 
+                  className="text-xl font-semibold text-[#2D3748] hover:text-blue-600"
+                >
+                  Take Home Pay Calculator
+                </Link>
+              </div>
               <Link 
                 to="/" 
                 className="inline-block text-[2rem] tracking-normal font-['Outfit']"
