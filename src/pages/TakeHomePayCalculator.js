@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
+import { supabase } from '../supabaseClient'; // Make sure this import exists
 
 const TakeHomePayCalculator = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +20,9 @@ const TakeHomePayCalculator = () => {
   });
 
   const [results, setResults] = useState(null);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const stateTaxRates = {
     'California': { rate: 0.093, name: 'California' },
@@ -215,6 +219,56 @@ const TakeHomePayCalculator = () => {
       currency: 'USD',
       maximumFractionDigits: 0
     }).format(amount);
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      return 'Email is required';
+    }
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    return '';
+  };
+
+  const handleEmailSubscribe = async () => {
+    // Validate email
+    const error = validateEmail(email);
+    setEmailError(error);
+    if (error) return;
+
+    setIsSubmitting(true);
+    try {
+      const { data, error: supabaseError } = await supabase
+        .from('email_submissions')
+        .insert([
+          {
+            email,
+            source: 'calculator',
+            is_active: true
+          }
+        ]);
+
+      if (supabaseError) {
+        if (supabaseError.code === '23505') { // Unique constraint error code
+          setEmailError('This email is already subscribed');
+        } else {
+          setEmailError('Failed to subscribe. Please try again.');
+        }
+        return;
+      }
+
+      // Success
+      setEmail('');
+      setEmailError('');
+      alert('Thanks for subscribing!');
+    } catch (err) {
+      console.error('Subscription error:', err);
+      setEmailError('An unexpected error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -583,14 +637,149 @@ const TakeHomePayCalculator = () => {
                   </div>
                 ) : (
                   <div className="h-full flex items-center justify-center">
-                    {/* Removed the grey text */}
+                    {/* Empty state */}
                   </div>
                 )}
               </div>
             </div>
           </article>
 
-          {/* New SEO-friendly content section */}
+          {/* Post-Calculation CTAs - Now below the form */}
+          {results && (
+            <div className="mt-12">
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Email Subscription */}
+                <div className="bg-blue-50 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                    Stay Updated on Salary Trends
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Get monthly insights on physician compensation trends and negotiation tips delivered to your inbox.
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (emailError) setEmailError('');
+                        }}
+                        placeholder="Enter your email"
+                        className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          emailError ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      <button 
+                        onClick={handleEmailSubscribe}
+                        disabled={isSubmitting}
+                        className={`px-4 py-2 bg-blue-600 text-white rounded-lg transition-colors ${
+                          isSubmitting 
+                            ? 'opacity-50 cursor-not-allowed' 
+                            : 'hover:bg-blue-700'
+                        }`}
+                      >
+                        {isSubmitting ? 'Subscribing...' : 'Subscribe'}
+                      </button>
+                    </div>
+                    {emailError && (
+                      <p className="text-red-500 text-sm">{emailError}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* View Salary Data CTA */}
+                <div className="bg-green-50 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                    Compare With Other Physicians
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    View real salary submissions from physicians in your specialty and location to benchmark your compensation.
+                  </p>
+                  <Link 
+                    to="/dashboard" 
+                    className="block w-full text-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    View Salary Data
+                  </Link>
+                </div>
+              </div>
+
+              {/* Additional CTAs */}
+              <div className="mt-8 grid md:grid-cols-3 gap-4">
+                <Link 
+                  to="/submit-salary"
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <span className="text-gray-700">Submit Your Salary</span>
+                  <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </Link>
+
+                <button 
+                  onClick={() => {/* Add save/print logic */}}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <span className="text-gray-700">Save Results</span>
+                  <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 01-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                </button>
+
+                <a 
+                  href="https://x.com/salarydr"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <span className="text-gray-700">Follow Us</span>
+                  <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
+                  </svg>
+                </a>
+              </div>
+
+              {/* Share Results */}
+              <div className="mt-8 text-center">
+                <p className="text-gray-600 mb-4">Share this calculator with your colleagues</p>
+                <div className="flex justify-center gap-4">
+                  <button 
+                    onClick={() => window.open(`https://twitter.com/intent/tweet?text=Calculate your physician take-home pay after taxes and deductions&url=https://www.salarydr.com/calculator`, '_blank')}
+                    className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+                    aria-label="Share on Twitter"
+                  >
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=https://www.salarydr.com/calculator`, '_blank')}
+                    className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+                    aria-label="Share on LinkedIn"
+                  >
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText('https://www.salarydr.com/calculator');
+                      alert('Link copied to clipboard!');
+                    }}
+                    className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+                    aria-label="Copy link"
+                  >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* New SEO content section */}
           <section className="mt-16 prose prose-lg mx-auto">
             <h2 className="text-3xl font-semibold text-gray-900 mb-6">
               Understanding Your Physician Take-Home Pay
