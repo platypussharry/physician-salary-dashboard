@@ -274,7 +274,7 @@ const SalarySubmissionForm = () => {
         </h1>
         <div className="w-full bg-gray-100 rounded-lg p-4 my-4 flex items-center justify-center">
           <p className="text-gray-700">Your data is anonymous and secure. 
-            <a href="#" className="text-blue-600 ml-1 hover:underline">Privacy Policy</a>
+            <a href="/privacy-policy" className="text-blue-600 ml-1 hover:underline">Privacy Policy</a>
           </p>
           <span className="ml-2 px-3 py-1 bg-blue-500 text-white text-sm rounded-md">SECURE</span>
         </div>
