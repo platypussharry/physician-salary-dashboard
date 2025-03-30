@@ -488,7 +488,7 @@ const SalarySubmissionForm = () => {
               <span className="text-red-500">Dr</span>
             </div>
             <h1 className="text-xl md:text-2xl font-bold text-center text-gray-800">
-              Join <span className="text-blue-700">2,318</span> doctors and unlock your free salary report today! 🚀
+              Join <span className="text-blue-700">2,318</span> doctors and help improve salary transparency! 🚀
             </h1>
             <div className="w-full bg-gray-100 rounded-lg p-4 my-4 flex items-center justify-center">
               <p className="text-gray-700">Your data is anonymous and secure. 
@@ -496,7 +496,7 @@ const SalarySubmissionForm = () => {
               </p>
               <span className="ml-2 px-3 py-1 bg-blue-500 text-white text-sm rounded-md">SECURE</span>
             </div>
-            <p className="text-gray-600 mb-4">See your custom report after submitting!</p>
+            <p className="text-gray-600 mb-4">Your contribution helps fellow physicians make informed career decisions</p>
             
             {/* Progress Bar */}
             <div className="w-full bg-gray-200 h-2 rounded-full mb-1">

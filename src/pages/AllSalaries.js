@@ -5,21 +5,32 @@ import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
 import { supabase } from '../supabaseClient';
-import { PRACTICE_TYPES, REGIONS } from '../types';
+
+const PRACTICE_TYPES = ["Hospital Employed", "Private Practice", "Academic"];
+
+const EXPERIENCE_RANGES = [
+  { label: "0-5 years", min: 0, max: 5 },
+  { label: "6-10 years", min: 6, max: 10 },
+  { label: "11-15 years", min: 11, max: 15 },
+  { label: "16-20 years", min: 16, max: 20 },
+  { label: "21-25 years", min: 21, max: 25 },
+  { label: "26+ years", min: 26, max: null }
+];
 
 const AllSalaries = () => {
   const [salaries, setSalaries] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [filters, setFilters] = useState({
     specialty: '',
-    region: '',
     practiceType: '',
     minSalary: '',
     maxSalary: '',
     yearsOfExperience: ''
   });
   const [sortConfig, setSortConfig] = useState({
-    key: 'submitted_at',
+    key: 'submission_date',
     direction: 'desc'
   });
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,22 +41,41 @@ const AllSalaries = () => {
     fetchSalaries();
   }, [filters, sortConfig, currentPage]);
 
+  // Fetch unique specialties on component mount
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('salary_submissions')
+          .select('specialty')
+          .not('specialty', 'is', null);
+        
+        if (error) throw error;
+        
+        // Get unique specialties
+        const uniqueSpecialties = [...new Set(data.map(item => item.specialty))].sort();
+        setSpecialties(uniqueSpecialties);
+      } catch (error) {
+        console.error('Error fetching specialties:', error);
+      }
+    };
+    
+    fetchSpecialties();
+  }, []);
+
   const fetchSalaries = async () => {
     setIsLoading(true);
     try {
       let query = supabase
         .from('salary_submissions')
-        .select('*');
+        .select('*', { count: 'exact' });
 
       // Apply filters
       if (filters.specialty) {
         query = query.eq('specialty', filters.specialty);
       }
-      if (filters.region) {
-        query = query.eq('region', filters.region);
-      }
       if (filters.practiceType) {
-        query = query.eq('practice_type', filters.practiceType);
+        query = query.eq('practice_setting', filters.practiceType);
       }
       if (filters.minSalary) {
         query = query.gte('total_compensation', parseFloat(filters.minSalary));
@@ -54,7 +84,13 @@ const AllSalaries = () => {
         query = query.lte('total_compensation', parseFloat(filters.maxSalary));
       }
       if (filters.yearsOfExperience) {
-        query = query.eq('years_of_experience', parseInt(filters.yearsOfExperience));
+        const range = EXPERIENCE_RANGES.find(r => r.label === filters.yearsOfExperience);
+        if (range) {
+          query = query.gte('years_of_experience', range.min);
+          if (range.max) {
+            query = query.lte('years_of_experience', range.max);
+          }
+        }
       }
 
       // Apply sorting
@@ -99,13 +135,26 @@ const AllSalaries = () => {
     }).format(value);
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Helmet>
         <title>All Physician Salaries | SalaryDr</title>
-        <meta name="description" content="Browse comprehensive physician salary data across specialties, locations, and practice types. View detailed salary information and trends." />
-        <meta name="keywords" content="physician salaries, doctor compensation, medical salaries, healthcare compensation, physician pay" />
+        <meta name="description" content="Browse comprehensive physician salary data across specialties, locations, and practice types. View detailed compensation information for doctors in hospital, private practice, and academic settings." />
+        <meta name="keywords" content="physician salaries, doctor compensation, medical salaries, healthcare compensation, physician pay, doctor salary data, medical compensation data" />
         <link rel="canonical" href="https://www.salarydr.com/all-salaries" />
+        <meta property="og:title" content="All Physician Salaries | SalaryDr" />
+        <meta property="og:description" content="Browse comprehensive physician salary data across specialties, locations, and practice types. View detailed compensation information for doctors." />
+        <meta property="og:url" content="https://www.salarydr.com/all-salaries" />
+        <meta name="twitter:title" content="All Physician Salaries | SalaryDr" />
+        <meta name="twitter:description" content="Browse comprehensive physician salary data across specialties, locations, and practice types." />
       </Helmet>
 
       {/* Navigation */}
@@ -134,7 +183,59 @@ const AllSalaries = () => {
               Add a Salary
             </Link>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Toggle menu"
+          >
+            <svg
+              className="w-6 h-6 text-gray-600"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              {isMobileMenuOpen ? (
+                <path d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden mt-4 p-4 bg-white rounded-lg shadow-lg">
+            <div className="flex flex-col space-y-4">
+              <Link 
+                to="/dashboard" 
+                className="text-lg font-semibold text-[#2D3748] hover:text-blue-600"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Salary Data
+              </Link>
+              <Link 
+                to="/calculator" 
+                className="text-lg font-semibold text-[#2D3748] hover:text-blue-600"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Take Home Pay Calculator
+              </Link>
+              <Link
+                to="/submit-salary"
+                className="text-lg font-semibold px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg text-center"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Add a Salary
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="container mx-auto px-4 py-8">
@@ -151,21 +252,8 @@ const AllSalaries = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">All Specialties</option>
-                {Array.from(new Set(salaries.map(s => s.specialty))).sort().map(specialty => (
+                {specialties.map(specialty => (
                   <option key={specialty} value={specialty}>{specialty}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
-              <select
-                value={filters.region}
-                onChange={(e) => handleFilterChange('region', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">All Regions</option>
-                {REGIONS.map(region => (
-                  <option key={region} value={region}>{region}</option>
                 ))}
               </select>
             </div>
@@ -179,6 +267,19 @@ const AllSalaries = () => {
                 <option value="">All Practice Types</option>
                 {PRACTICE_TYPES.map(type => (
                   <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
+              <select
+                value={filters.yearsOfExperience}
+                onChange={(e) => handleFilterChange('yearsOfExperience', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">All Experience Levels</option>
+                {EXPERIENCE_RANGES.map(range => (
+                  <option key={range.label} value={range.label}>{range.label}</option>
                 ))}
               </select>
             </div>
@@ -202,19 +303,28 @@ const AllSalaries = () => {
                 placeholder="$500,000"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
-              <select
-                value={filters.yearsOfExperience}
-                onChange={(e) => handleFilterChange('yearsOfExperience', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">All Experience Levels</option>
-                {Array.from(new Set(salaries.map(s => s.years_of_experience))).sort((a, b) => a - b).map(years => (
-                  <option key={years} value={years}>{years} years</option>
-                ))}
-              </select>
-            </div>
+          </div>
+
+          {/* Reset Filters Button */}
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={() => {
+                setFilters({
+                  specialty: '',
+                  practiceType: '',
+                  minSalary: '',
+                  maxSalary: '',
+                  yearsOfExperience: ''
+                });
+                setCurrentPage(1);
+              }}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Reset Filters
+            </button>
           </div>
 
           {/* Salary Table */}
@@ -239,16 +349,16 @@ const AllSalaries = () => {
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('region')}
+                    onClick={() => handleSort('geographic_location')}
                   >
-                    Region {sortConfig.key === 'region' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    Location {sortConfig.key === 'geographic_location' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('practice_type')}
+                    onClick={() => handleSort('practice_setting')}
                   >
-                    Practice Type {sortConfig.key === 'practice_type' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    Practice Type {sortConfig.key === 'practice_setting' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
                   <th
                     scope="col"
@@ -257,44 +367,49 @@ const AllSalaries = () => {
                   >
                     Experience {sortConfig.key === 'years_of_experience' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('submitted_at')}
-                  >
-                    Submitted {sortConfig.key === 'submitted_at' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {isLoading ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center">Loading...</td>
+                    <td colSpan="5" className="px-6 py-4 text-center">
+                      <div className="flex justify-center items-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                        <span className="ml-2">Loading...</span>
+                      </div>
+                    </td>
                   </tr>
                 ) : salaries.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center">No salaries found matching your filters</td>
+                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                      No salaries found matching your filters
+                    </td>
                   </tr>
                 ) : (
                   salaries.map((salary) => (
                     <tr key={salary.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {salary.specialty}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{salary.specialty}</div>
+                        {salary.subspecialty && (
+                          <div className="text-sm text-gray-500">{salary.subspecialty}</div>
+                        )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatCurrency(salary.total_compensation)}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{formatCurrency(salary.total_compensation)}</div>
+                        {salary.bonus_incentives > 0 && (
+                          <div className="text-xs text-gray-500">
+                            Includes {formatCurrency(salary.bonus_incentives)} bonus
+                          </div>
+                        )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {salary.region}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{salary.geographic_location}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {salary.practice_type}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{salary.practice_setting}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {salary.years_of_experience} years
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(salary.submitted_at).toLocaleDateString()}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{salary.years_of_experience} years</div>
                       </td>
                     </tr>
                   ))
@@ -303,42 +418,160 @@ const AllSalaries = () => {
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* Updated Pagination */}
           {totalPages > 1 && (
-            <div className="mt-6 flex justify-center">
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${
-                      currentPage === page
-                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </nav>
+            <div className="mt-8">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 flex justify-center">
+                  <nav className="relative z-0 inline-flex gap-2" aria-label="Pagination">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center px-4 py-2 rounded-full bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    
+                    {/* Show first page */}
+                    {currentPage > 3 && (
+                      <>
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          className="relative inline-flex items-center px-4 py-2 rounded-full bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          1
+                        </button>
+                        {currentPage > 4 && (
+                          <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700">
+                            ...
+                          </span>
+                        )}
+                      </>
+                    )}
+                    
+                    {/* Show pages around current page */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      if (pageNum > 0 && pageNum <= totalPages) {
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`relative inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                              currentPage === pageNum
+                                ? 'z-10 bg-blue-600 text-white border border-blue-600'
+                                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      }
+                      return null;
+                    })}
+                    
+                    {/* Show last page */}
+                    {currentPage < totalPages - 2 && (
+                      <>
+                        {currentPage < totalPages - 3 && (
+                          <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700">
+                            ...
+                          </span>
+                        )}
+                        <button
+                          onClick={() => setCurrentPage(totalPages)}
+                          className="relative inline-flex items-center px-4 py-2 rounded-full bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                    
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="relative inline-flex items-center px-4 py-2 rounded-full bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
+              </div>
+              <div className="mt-3 text-sm text-gray-500 text-center">
+                Showing page {currentPage} of {totalPages}
+              </div>
             </div>
           )}
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="bg-blue-50 py-12 mt-12">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row gap-16">
+            {/* Legal Links */}
+            <div className="space-y-2">
+              <Link to="/privacy-policy" className="block text-[#2D3748] hover:text-blue-600 text-lg">
+                Privacy Policy
+              </Link>
+              <Link to="/terms" className="block text-[#2D3748] hover:text-blue-600 text-lg">
+                Terms and Conditions
+              </Link>
+              <a 
+                href="mailto:thesalarydr@gmail.com"
+                className="block text-[#2D3748] hover:text-blue-600 text-lg"
+              >
+                Contact Us
+              </a>
+            </div>
+            
+            {/* Social Links */}
+            <div className="space-y-2">
+              <a 
+                href="https://www.instagram.com/salarydr_/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="block text-[#2D3748] hover:text-blue-600 text-lg"
+              >
+                Instagram
+              </a>
+              <a 
+                href="https://x.com/salarydr" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="block text-[#2D3748] hover:text-blue-600 text-lg"
+              >
+                X/Twitter
+              </a>
+              <a 
+                href="https://www.tiktok.com/@salarydr" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="block text-[#2D3748] hover:text-blue-600 text-lg"
+              >
+                TikTok
+              </a>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="pt-8 mt-8 border-t border-gray-200">
+            <p className="text-[#2D3748] text-lg">© 2025 All Rights Reserved by salaryDr.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
