@@ -6,6 +6,7 @@ import '@fontsource/outfit/600.css';
 
 const Home = () => {
   const [count, setCount] = useState(2308); // Start at 2,308 (2,318 - 10)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Simulate counter updates
@@ -22,32 +23,100 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Navigation */}
-      <nav className="w-full p-6">
-        <div className="container mx-auto flex justify-between items-center">
-          <Link 
-            to="/" 
-            className="text-[3.5rem] tracking-normal font-['Outfit']"
-          >
-            <span className="text-[#4169E1] font-[400]">salary</span>
-            <span className="text-[#E94E4A] font-[500]">Dr</span>
-          </Link>
-          <div className="flex gap-8 items-center">
-            <Link to="/dashboard" className="text-xl font-semibold text-[#2D3748]">
-              Salary Data
-            </Link>
-            <Link to="/calculator" className="text-xl font-semibold text-[#2D3748]">
-              Take Home Pay Calculator
-            </Link>
-            <Link to="/faqs" className="text-xl font-semibold text-[#2D3748]">
-              FAQs
-            </Link>
-            <Link
-              to="/submit-salary"
-              className="text-xl font-semibold px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg"
+      <nav className="w-full p-4 sm:p-6">
+        <div className="container mx-auto">
+          <div className="flex justify-between items-center">
+            <Link 
+              to="/" 
+              className="text-[2.5rem] sm:text-[3rem] lg:text-[3.5rem] tracking-normal font-['Outfit'] flex-shrink-0"
             >
-              Add a Salary
+              <span className="text-[#4169E1] font-[400]">salary</span>
+              <span className="text-[#E94E4A] font-[500]">Dr</span>
             </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center">
+              <div className="flex flex-wrap lg:flex-nowrap gap-4 lg:gap-8 justify-end">
+                <Link 
+                  to="/dashboard" 
+                  className="text-lg lg:text-xl font-semibold text-[#2D3748] whitespace-nowrap hover:text-blue-600 transition-colors"
+                >
+                  Salary Data
+                </Link>
+                <Link 
+                  to="/calculator" 
+                  className="text-lg lg:text-xl font-semibold text-[#2D3748] whitespace-nowrap hover:text-blue-600 transition-colors"
+                >
+                  Take Home Pay Calculator
+                </Link>
+                <Link 
+                  to="/faqs" 
+                  className="text-lg lg:text-xl font-semibold text-[#2D3748] whitespace-nowrap hover:text-blue-600 transition-colors"
+                >
+                  FAQs
+                </Link>
+                <Link
+                  to="/submit-salary"
+                  className="text-lg lg:text-xl font-semibold px-4 lg:px-6 py-2 lg:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg whitespace-nowrap ml-2 lg:ml-4"
+                >
+                  Add a Salary
+                </Link>
+              </div>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {!isMobileMenuOpen ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+            </button>
           </div>
+
+          {/* Mobile Navigation */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden mt-4 py-4 border-t border-gray-200">
+              <div className="flex flex-col gap-4">
+                <Link 
+                  to="/dashboard" 
+                  className="text-lg font-semibold text-[#2D3748] hover:text-blue-600"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Salary Data
+                </Link>
+                <Link 
+                  to="/calculator" 
+                  className="text-lg font-semibold text-[#2D3748] hover:text-blue-600"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Take Home Pay Calculator
+                </Link>
+                <Link 
+                  to="/faqs" 
+                  className="text-lg font-semibold text-[#2D3748] hover:text-blue-600"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  FAQs
+                </Link>
+                <Link
+                  to="/submit-salary"
+                  className="text-lg font-semibold px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg text-center"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Add a Salary
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
