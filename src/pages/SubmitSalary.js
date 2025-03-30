@@ -45,6 +45,67 @@ const SalarySubmissionForm = () => {
     hoursWorkedPerWeek: ''
   });
 
+  // Add state to region mapping
+  const STATE_TO_REGION = {
+    // Northeast
+    'Connecticut': 'Northeast',
+    'Maine': 'Northeast',
+    'Massachusetts': 'Northeast',
+    'New Hampshire': 'Northeast',
+    'Rhode Island': 'Northeast',
+    'Vermont': 'Northeast',
+    'New Jersey': 'Northeast',
+    'New York': 'Northeast',
+    'Pennsylvania': 'Northeast',
+    
+    // Midwest
+    'Illinois': 'Midwest',
+    'Indiana': 'Midwest',
+    'Michigan': 'Midwest',
+    'Ohio': 'Midwest',
+    'Wisconsin': 'Midwest',
+    'Iowa': 'Midwest',
+    'Kansas': 'Midwest',
+    'Minnesota': 'Midwest',
+    'Missouri': 'Midwest',
+    'Nebraska': 'Midwest',
+    'North Dakota': 'Midwest',
+    'South Dakota': 'Midwest',
+    
+    // South
+    'Delaware': 'South',
+    'Florida': 'South',
+    'Georgia': 'South',
+    'Maryland': 'South',
+    'North Carolina': 'South',
+    'South Carolina': 'South',
+    'Virginia': 'South',
+    'West Virginia': 'South',
+    'Alabama': 'South',
+    'Kentucky': 'South',
+    'Mississippi': 'South',
+    'Tennessee': 'South',
+    'Arkansas': 'South',
+    'Louisiana': 'South',
+    'Oklahoma': 'South',
+    'Texas': 'South',
+    
+    // West
+    'Arizona': 'West',
+    'Colorado': 'West',
+    'Idaho': 'West',
+    'Montana': 'West',
+    'Nevada': 'West',
+    'New Mexico': 'West',
+    'Utah': 'West',
+    'Wyoming': 'West',
+    'Alaska': 'West',
+    'California': 'West',
+    'Hawaii': 'West',
+    'Oregon': 'West',
+    'Washington': 'West'
+  };
+
   const handleNext = (e) => {
     e.preventDefault();
     
@@ -167,6 +228,11 @@ const SalarySubmissionForm = () => {
       const bonusIncentives = parseFloat(parseNumber(formData.bonusIncentives));
       const totalComp = formData.totalCompensation || (baseSalary + bonusIncentives);
 
+      // Set geographic location as city and state
+      const geographic_location = formData.location.city 
+        ? `${formData.location.city}, ${formData.location.state}`
+        : formData.location.state;
+
       const { data, error } = await supabase
         .from('salary_submissions')
         .insert([{
@@ -175,7 +241,7 @@ const SalarySubmissionForm = () => {
           years_of_experience: parseInt(formData.yearsOfExperience),
           city: formData.location.city,
           state: formData.location.state,
-          geographic_location: formData.location.region,
+          geographic_location,
           practice_setting: formData.practiceType,
           total_compensation: totalComp,
           base_salary: baseSalary,
@@ -185,7 +251,9 @@ const SalarySubmissionForm = () => {
           satisfaction_level: parseInt(formData.satisfactionLevel),
           choosespecialty: formData.wouldChooseAgain === 'yes',
           email: formData.email,
-          created_date: new Date().toISOString()
+          created_date: new Date().toISOString(),
+          submission_date: new Date().toISOString(),
+          role_title: "Attending Physician"
         }]);
 
       if (error) throw error;
@@ -701,7 +769,7 @@ const SalarySubmissionForm = () => {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    placeholder="Enter email for your report"
+                    placeholder="Enter your email"
                   />
                 </div>
                 
@@ -711,7 +779,7 @@ const SalarySubmissionForm = () => {
                     disabled={isSubmitting}
                     className={`w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit and Get Your Report!'}
+                    {isSubmitting ? 'Submitting...' : 'Submit'}
                   </button>
                   
                   <button
@@ -724,7 +792,6 @@ const SalarySubmissionForm = () => {
                 </div>
                 
                 <p className="text-sm text-gray-600 text-center mt-4">
-                  Enter your email to receive your free salary report (optional, unsubscribe anytime). 
                   Want to delete your data later? Email <a href="mailto:thesalarydr@gmail.com" className="text-blue-600 hover:underline">thesalarydr@gmail.com</a>.
                 </p>
               </div>
@@ -734,7 +801,6 @@ const SalarySubmissionForm = () => {
             {submitStatus === 'success' && (
               <div className="p-4 bg-green-50 text-green-700 rounded-md mt-4">
                 Thank you for your submission! Your data helps create transparency in physician compensation.
-                Your personalized report is being generated and will be available shortly.
               </div>
             )}
             {submitStatus === 'error' && (
