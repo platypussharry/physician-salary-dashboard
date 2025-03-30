@@ -5,8 +5,10 @@ import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
 import { supabase } from '../supabaseClient'; // Make sure this import exists
+import { STATES } from '../constants';
 
 const TakeHomePayCalculator = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [formData, setFormData] = useState({
     grossSalary: '',
     state: '',
@@ -286,33 +288,84 @@ const TakeHomePayCalculator = () => {
       </Helmet>
 
       {/* Navigation */}
-      <nav className="w-full p-6" role="navigation" aria-label="Main navigation">
+      <nav className="w-full p-4 sm:p-6" role="navigation" aria-label="Main navigation">
         <div className="container mx-auto flex justify-between items-center">
           <Link 
             to="/" 
-            className="text-[3.5rem] tracking-normal font-['Outfit']"
+            className="text-[2.5rem] sm:text-[3.5rem] tracking-normal font-['Outfit']"
           >
             <span className="text-[#4169E1] font-[400]">salary</span>
             <span className="text-[#E94E4A] font-[500]">Dr</span>
           </Link>
-          <div className="flex gap-8 items-center">
-            <Link to="/dashboard" className="text-xl font-semibold text-[#2D3748]">
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex gap-4 lg:gap-8 items-center">
+            <Link to="/dashboard" className="text-lg lg:text-xl font-semibold text-[#2D3748] whitespace-nowrap hover:text-blue-600 transition-colors">
               Salary Data
             </Link>
-            <Link to="/calculator" className="text-xl font-semibold text-[#2D3748]">
+            <Link to="/calculator" className="text-lg lg:text-xl font-semibold text-[#2D3748] whitespace-nowrap hover:text-blue-600 transition-colors">
               Take Home Pay Calculator
-            </Link>
-            <Link to="/faqs" className="text-xl font-semibold text-[#2D3748]">
-              FAQs
             </Link>
             <Link
               to="/submit-salary"
-              className="text-xl font-semibold px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg"
+              className="text-lg lg:text-xl font-semibold px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg"
             >
               Add a Salary
             </Link>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Toggle menu"
+          >
+            <svg
+              className="w-6 h-6 text-gray-600"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              {isMobileMenuOpen ? (
+                <path d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden mt-4 p-4 bg-white rounded-lg shadow-lg">
+            <div className="flex flex-col space-y-4">
+              <Link 
+                to="/dashboard" 
+                className="text-lg font-semibold text-[#2D3748] hover:text-blue-600"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Salary Data
+              </Link>
+              <Link 
+                to="/calculator" 
+                className="text-lg font-semibold text-[#2D3748] hover:text-blue-600"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Take Home Pay Calculator
+              </Link>
+              <Link
+                to="/submit-salary"
+                className="text-lg font-semibold px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg text-center"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Add a Salary
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="container mx-auto px-4 py-12">

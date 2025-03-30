@@ -6,6 +6,7 @@ import '@fontsource/outfit/600.css';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from './supabaseClient';
 import { PRACTICE_TYPES, REGIONS } from './types';
+import { STATES } from './constants';
 
 // Helper function to parse currency values
 const parseCurrency = (value) => {
@@ -97,6 +98,52 @@ const calculateAverage = (items) => {
   return Math.round(total / validItems.length);
 };
 
+// Add these helper functions at the top level
+const calculateFederalTax = (income) => {
+  const brackets = [
+    { threshold: 578125, rate: 0.37 },
+    { threshold: 231250, rate: 0.35 },
+    { threshold: 182100, rate: 0.32 },
+    { threshold: 95375, rate: 0.24 },
+    { threshold: 44725, rate: 0.22 },
+    { threshold: 11000, rate: 0.12 },
+    { threshold: 0, rate: 0.10 }
+  ];
+
+  let tax = 0;
+  let remainingIncome = income;
+
+  for (let i = 0; i < brackets.length - 1; i++) {
+    const currentBracket = brackets[i];
+    const nextBracket = brackets[i + 1];
+    
+    if (remainingIncome > currentBracket.threshold) {
+      tax += (remainingIncome - currentBracket.threshold) * currentBracket.rate;
+      remainingIncome = currentBracket.threshold;
+    }
+  }
+
+  if (remainingIncome > 0) {
+    tax += remainingIncome * brackets[brackets.length - 1].rate;
+  }
+
+  return tax;
+};
+
+const calculateFICATax = (income) => {
+  const socialSecurityRate = 0.062;
+  const medicareRate = 0.0145;
+  const socialSecurityWageCap = 160200;
+  
+  const socialSecurityTax = Math.min(income, socialSecurityWageCap) * socialSecurityRate;
+  const medicareTax = income * medicareRate;
+  
+  // Additional Medicare Tax for high earners
+  const additionalMedicareTax = income > 200000 ? (income - 200000) * 0.009 : 0;
+  
+  return socialSecurityTax + medicareTax + additionalMedicareTax;
+};
+
 const SalaryDrDashboard = () => {
   const [practiceType, setPracticeType] = useState('All Practice Types');
   const [locationFilter, setLocationFilter] = useState('All Regions');
@@ -152,6 +199,9 @@ const SalaryDrDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showReferModal, setShowReferModal] = useState(false);
+  const [miniCalcIncome, setMiniCalcIncome] = useState('');
+  const [miniCalcState, setMiniCalcState] = useState('Minnesota');
+  const [miniCalcResults, setMiniCalcResults] = useState(null);
 
   // Add formatTimeAgo function
   const formatTimeAgo = (date) => {
@@ -1181,6 +1231,26 @@ const SalaryDrDashboard = () => {
       );
     };
 
+    const calculateMiniTakeHome = () => {
+      const income = parseFloat(miniCalcIncome.replace(/[^0-9.]/g, ''));
+      if (!income) return;
+
+      const federalTax = calculateFederalTax(income);
+      const ficaTax = calculateFICATax(income);
+      const stateTaxRate = STATES[miniCalcState] || 0;
+      const stateTax = income * stateTaxRate;
+
+      const totalTaxes = federalTax + ficaTax + stateTax;
+      const takeHomePay = income - totalTaxes;
+
+      setMiniCalcResults({
+        annual: takeHomePay,
+        monthly: takeHomePay / 12,
+        biweekly: takeHomePay / 26,
+        effectiveTaxRate: (totalTaxes / income) * 100
+      });
+    };
+
     if (isLoading) {
         return (
           <div className="flex items-center justify-center min-h-screen bg-blue-50">
@@ -1202,12 +1272,6 @@ const SalaryDrDashboard = () => {
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center gap-8">
                 <h1 className="text-3xl font-bold text-gray-900">Physician Salary Explorer</h1>
-                <Link 
-                  to="/calculator" 
-                  className="text-xl font-semibold text-[#2D3748] hover:text-blue-600"
-                >
-                  Take Home Pay Calculator
-                </Link>
               </div>
               <Link 
                 to="/" 
@@ -1590,6 +1654,92 @@ const SalaryDrDashboard = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Mini Calculator */}
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Quick Take-Home Calculator
+              </h2>
+              <Link
+                to="/calculator"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center"
+              >
+                Full Calculator
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Annual Gross Income
+                </label>
+                <input
+                  type="text"
+                  value={miniCalcIncome}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9.]/g, '');
+                    setMiniCalcIncome(value ? `$${Number(value).toLocaleString()}` : '');
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="$300,000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  State
+                </label>
+                <select
+                  value={miniCalcState}
+                  onChange={(e) => setMiniCalcState(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {Object.keys(STATES).map(state => (
+                    <option key={state} value={state}>{state}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <button
+              onClick={calculateMiniTakeHome}
+              className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors mb-4"
+            >
+              Calculate
+            </button>
+
+            {miniCalcResults && (
+              <div className="space-y-2 pt-4 border-t border-gray-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Annual Take-Home:</span>
+                  <span className="font-semibold">${Math.round(miniCalcResults.annual).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Monthly Take-Home:</span>
+                  <span className="font-semibold">${Math.round(miniCalcResults.monthly).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Bi-Weekly Take-Home:</span>
+                  <span className="font-semibold">${Math.round(miniCalcResults.biweekly).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Effective Tax Rate:</span>
+                  <span className="font-semibold">{miniCalcResults.effectiveTaxRate.toFixed(1)}%</span>
+                </div>
+                <div className="mt-4 text-center">
+                  <Link
+                    to="/calculator"
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    Get detailed breakdown →
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
