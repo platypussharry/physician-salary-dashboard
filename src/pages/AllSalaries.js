@@ -22,6 +22,7 @@ const AllSalaries = () => {
   const [specialties, setSpecialties] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedRowId, setExpandedRowId] = useState(null);
   const [filters, setFilters] = useState({
     specialty: '',
     practiceType: '',
@@ -141,6 +142,24 @@ const AllSalaries = () => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleRowClick = (id) => {
+    setExpandedRowId(expandedRowId === id ? null : id);
+  };
+
+  const formatInputCurrency = (value) => {
+    if (!value) return '';
+    // Remove all non-numeric characters
+    const numericValue = value.toString().replace(/[^0-9]/g, '');
+    // Format with commas
+    return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  };
+
+  const handleSalaryInput = (key, value) => {
+    // Remove any non-numeric characters for the actual filter value
+    const numericValue = value.replace(/[^0-9]/g, '');
+    handleFilterChange(key, numericValue);
   };
 
   return (
@@ -285,23 +304,29 @@ const AllSalaries = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Min Salary</label>
-              <input
-                type="number"
-                value={filters.minSalary}
-                onChange={(e) => handleFilterChange('minSalary', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                placeholder="$200,000"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                <input
+                  type="text"
+                  value={formatInputCurrency(filters.minSalary)}
+                  onChange={(e) => handleSalaryInput('minSalary', e.target.value)}
+                  className="w-full px-3 py-2 pl-7 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="200,000"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Max Salary</label>
-              <input
-                type="number"
-                value={filters.maxSalary}
-                onChange={(e) => handleFilterChange('maxSalary', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                placeholder="$500,000"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                <input
+                  type="text"
+                  value={formatInputCurrency(filters.maxSalary)}
+                  onChange={(e) => handleSalaryInput('maxSalary', e.target.value)}
+                  className="w-full px-3 py-2 pl-7 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="500,000"
+                />
+              </div>
             </div>
           </div>
 
@@ -387,31 +412,62 @@ const AllSalaries = () => {
                   </tr>
                 ) : (
                   salaries.map((salary) => (
-                    <tr key={salary.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{salary.specialty}</div>
-                        {salary.subspecialty && (
-                          <div className="text-sm text-gray-500">{salary.subspecialty}</div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{formatCurrency(salary.total_compensation)}</div>
-                        {salary.bonus_incentives > 0 && (
-                          <div className="text-xs text-gray-500">
-                            Includes {formatCurrency(salary.bonus_incentives)} bonus
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{salary.geographic_location}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{salary.practice_setting}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{salary.years_of_experience} years</div>
-                      </td>
-                    </tr>
+                    <React.Fragment key={salary.id}>
+                      <tr 
+                        onClick={() => handleRowClick(salary.id)} 
+                        className="hover:bg-gray-50 cursor-pointer"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{salary.specialty}</div>
+                          {salary.subspecialty && (
+                            <div className="text-sm text-gray-500">{salary.subspecialty}</div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{formatCurrency(salary.total_compensation)}</div>
+                          {salary.bonus_incentives > 0 && (
+                            <div className="text-xs text-gray-500">
+                              Includes {formatCurrency(salary.bonus_incentives)} bonus
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{salary.geographic_location}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{salary.practice_setting}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{salary.years_of_experience} years</div>
+                        </td>
+                      </tr>
+                      {expandedRowId === salary.id && (
+                        <tr className="bg-blue-50">
+                          <td colSpan="5" className="px-6 py-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div>
+                                <div className="text-sm font-medium text-gray-500">Hours Worked/Week</div>
+                                <div className="text-sm text-gray-900">{salary.hours_worked} hours</div>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-500">Satisfaction Score</div>
+                                <div className="text-sm text-gray-900">{salary.satisfaction_level}/5</div>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-500">Choose Specialty Again?</div>
+                                <div className="text-sm text-gray-900">
+                                  {salary.would_choose_specialty_again ? 'Yes' : 'No'}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-500">Submitted</div>
+                                <div className="text-sm text-gray-900">{formatDate(salary.submission_date)}</div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))
                 )}
               </tbody>
