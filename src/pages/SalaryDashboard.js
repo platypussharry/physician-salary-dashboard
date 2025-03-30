@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
@@ -145,6 +145,7 @@ const calculateFICATax = (income) => {
 };
 
 const SalaryDrDashboard = () => {
+  const navigate = useNavigate();
   const [practiceType, setPracticeType] = useState('All Practice Types');
   const [locationFilter, setLocationFilter] = useState('All Regions');
   const [specialtyFilter, setSpecialtyFilter] = useState('All Physicians');
@@ -885,7 +886,7 @@ const SalaryDrDashboard = () => {
       };
     
       const handleViewAllSalaries = () => {
-        console.log('Navigate to full salary list with current filters');
+        navigate('/all-salaries');
       };
 
     const calculateUserSalaryGrade = (userComp, avgComp, percentile) => {
