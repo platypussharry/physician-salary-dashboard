@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { supabase } from '../supabaseClient';
 import { PRACTICE_TYPES, REGIONS } from '../types';
 import { STATES } from '../constants';
+import ReactGA from 'react-ga4';
 
 // Helper function to parse currency values
 const parseCurrency = (value) => {
@@ -901,6 +902,13 @@ const SalaryDrDashboard = () => {
     };
 
     const analyzeUserSalary = () => {
+      // Track the analysis attempt
+      ReactGA.event('analyze_salary', {
+        specialty: userInput.specialty || 'No Specialty Selected',
+        location: userInput.location || 'All Regions',
+        practice_type: userInput.practiceSetting || 'All Practice Types'
+      });
+
       if (!userInput.compensation || !userInput.specialty) {
         setComparisonResult({
           error: 'Please enter both compensation and specialty.'

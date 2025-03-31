@@ -9,6 +9,7 @@ import TermsAndConditions from './pages/TermsAndConditions';
 import Home from './pages/Home';
 import TakeHomePayCalculator from './pages/TakeHomePayCalculator';
 import AllSalaries from './pages/AllSalaries';
+import Feedback from './pages/Feedback';
 
 // Initialize GA4
 ReactGA.initialize('G-642YJXJWZS');
@@ -36,6 +37,7 @@ function App() {
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/calculator" element={<TakeHomePayCalculator />} />
         <Route path="/all-salaries" element={<AllSalaries />} />
+        <Route path="/feedback" element={<Feedback />} />
       </Routes>
     </Router>
   );

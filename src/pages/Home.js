@@ -105,6 +105,12 @@ const Home = () => {
                   >
                     Take Home Pay Calculator
                   </Link>
+                  <Link 
+                    to="/feedback" 
+                    className="text-lg lg:text-xl font-semibold text-[#2D3748] whitespace-nowrap hover:text-blue-600 transition-colors"
+                  >
+                    Feedback
+                  </Link>
                   <Link
                     to="/submit-salary"
                     className="text-lg lg:text-xl font-semibold px-4 lg:px-6 py-2 lg:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 shadow-lg whitespace-nowrap ml-2 lg:ml-4"
@@ -149,6 +155,13 @@ const Home = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Take Home Pay Calculator
+                  </Link>
+                  <Link 
+                    to="/feedback" 
+                    className="text-lg font-semibold text-[#2D3748] hover:text-blue-600"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Feedback
                   </Link>
                   <Link
                     to="/submit-salary"
