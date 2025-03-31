@@ -110,8 +110,7 @@ const SalarySubmissionForm = () => {
   // Track form start when component mounts
   useEffect(() => {
     ReactGA.event('form_start', {
-      form_name: 'salary_submission',
-      step: 1
+      form_name: 'salary_submission'
     });
   }, []);
 
@@ -135,7 +134,7 @@ const SalarySubmissionForm = () => {
     // Track successful step completion
     ReactGA.event('step_complete', {
       form_name: 'salary_submission',
-      step_number: step
+      event_label: `Step ${step}`
     });
     
     setStep(step + 1);
@@ -289,6 +288,13 @@ const SalarySubmissionForm = () => {
       }
 
       console.log('Submission successful:', data);
+      
+      // Track successful submission
+      ReactGA.event('submit_success', {
+        form_name: 'salary_submission',
+        specialty: formData.specialty
+      });
+      
       setSubmitStatus('success');
 
       // Reset form on success
