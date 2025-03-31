@@ -1508,12 +1508,7 @@ const SalaryDrDashboard = () => {
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <p className="text-sm font-medium text-gray-700">Satisfaction Score:</p>
-                                  <p className="text-sm text-gray-900">
-                                    {typeof submission.satisfactionLevel === 'number' 
-                                      ? `${submission.satisfactionLevel.toFixed(1)}/5.0`
-                                      : '0.0/5.0'
-                                    }
-                                  </p>
+                                  <p className="text-sm text-gray-900">{submission.satisfaction}/5</p>
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-gray-700">Bonus/Incentives:</p>
