@@ -109,10 +109,9 @@ const SalarySubmissionForm = () => {
 
   // Track form start when component mounts
   useEffect(() => {
-    ReactGA.event({
-      category: 'Salary Form',
-      action: 'Form Start',
-      label: 'Step 1'
+    ReactGA.event('form_start', {
+      form_name: 'salary_submission',
+      step: 1
     });
   }, []);
 
@@ -134,11 +133,9 @@ const SalarySubmissionForm = () => {
     }
     
     // Track successful step completion
-    ReactGA.event({
-      category: 'Salary Form',
-      action: 'Step Complete',
-      label: `Step ${step}`,
-      value: step
+    ReactGA.event('step_complete', {
+      form_name: 'salary_submission',
+      step_number: step
     });
     
     setStep(step + 1);
@@ -147,11 +144,9 @@ const SalarySubmissionForm = () => {
   const handleBack = (e) => {
     e.preventDefault();
     // Track when users go back
-    ReactGA.event({
-      category: 'Salary Form',
-      action: 'Step Back',
-      label: `From Step ${step}`,
-      value: step
+    ReactGA.event('step_back', {
+      form_name: 'salary_submission',
+      from_step: step
     });
     setStep(step - 1);
   };
@@ -242,10 +237,8 @@ const SalarySubmissionForm = () => {
     setIsSubmitting(true);
 
     // Track submission attempt
-    ReactGA.event({
-      category: 'Salary Form',
-      action: 'Submit Attempt',
-      label: 'Final Step'
+    ReactGA.event('submit_attempt', {
+      form_name: 'salary_submission'
     });
 
     try {
@@ -280,28 +273,25 @@ const SalarySubmissionForm = () => {
         console.error('Error:', error);
         setSubmitStatus('error');
         // Track submission error
-        ReactGA.event({
-          category: 'Salary Form',
-          action: 'Submit Error',
-          label: error.message
+        ReactGA.event('submit_error', {
+          form_name: 'salary_submission',
+          error_type: error.message
         });
       } else {
         setSubmitStatus('success');
         // Track successful submission
-        ReactGA.event({
-          category: 'Salary Form',
-          action: 'Submit Success',
-          label: formData.specialty
+        ReactGA.event('submit_success', {
+          form_name: 'salary_submission',
+          specialty: formData.specialty
         });
       }
     } catch (error) {
       console.error('Error:', error);
       setSubmitStatus('error');
       // Track submission error
-      ReactGA.event({
-        category: 'Salary Form',
-        action: 'Submit Error',
-        label: 'Exception'
+      ReactGA.event('submit_error', {
+        form_name: 'salary_submission',
+        error_type: 'exception'
       });
     }
 
