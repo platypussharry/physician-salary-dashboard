@@ -1423,20 +1423,20 @@ const SalaryDrDashboard = () => {
               </div>
               <div className="mt-8 pt-6 border-t border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Comparison by Employment Type</h2>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {comparisonData.map((item) => (
                 <div key={item.type} className="bg-blue-50 rounded-lg p-4 text-center">
-                  <div className="text-lg font-semibold text-indigo-900">{item.type}</div>
-                  <div className="text-2xl font-bold text-gray-900">{formatCurrency(item.avgComp)}</div>
-                  <div className="text-sm text-gray-500">{item.submissions} submissions</div>
+                  <div className="text-base sm:text-lg font-semibold text-indigo-900">{item.type}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900 mt-2">{formatCurrency(item.avgComp)}</div>
+                  <div className="text-sm text-gray-500 mt-1">{item.submissions} submissions</div>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Recent Submissions</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2 sm:mb-0">Recent Submissions</h2>
               <Link
                 to="/all-salaries"
                 className="text-blue-600 hover:text-blue-700 font-medium flex items-center"
@@ -1447,9 +1447,54 @@ const SalaryDrDashboard = () => {
                 </svg>
               </Link>
             </div>
+            
+            {/* Mobile view for recent submissions */}
+            <div className="block sm:hidden">
+              {recentSubmissions.filter(submission => {
+                if (activeTab === 'overview') return true;
+                const employerType = submission.employerType?.toLowerCase() || '';
+                switch (activeTab) {
+                  case 'academic':
+                    return employerType === 'academic';
+                  case 'hospital':
+                    return employerType === 'hospital-employed';
+                  case 'private':
+                    return employerType === 'private practice';
+                  default:
+                    return true;
+                }
+              }).map(submission => (
+                <div key={submission.id} className="bg-white rounded-lg shadow-sm p-4 mb-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="font-medium text-gray-900">{submission.specialty}</div>
+                      {submission.subspecialty && (
+                        <div className="text-sm text-gray-500">{submission.subspecialty}</div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-indigo-600">{formatCurrency(submission.compensation)}</div>
+                      <div className="text-sm text-gray-500">{formatPostedDate(submission.submissionDate)}</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                      {submission.employerType}
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      {submission.location}
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      {submission.yearsOfExperience} years
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-            <div className="overflow-x-auto bg-blue-50 rounded-lg">
-              <table className="min-w-full">
+            {/* Desktop view for recent submissions */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-blue-100">
                   <tr>
                     <th className="px-6 py-3 text-center text-xs font-medium text-indigo-900 uppercase">Posted</th>
