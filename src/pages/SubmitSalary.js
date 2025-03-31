@@ -134,7 +134,7 @@ const SalarySubmissionForm = () => {
     // Track successful step completion
     ReactGA.event('step_complete', {
       form_name: 'salary_submission',
-      event_label: `Step ${step}`
+      step: `Step ${step}`
     });
     
     setStep(step + 1);
@@ -145,7 +145,7 @@ const SalarySubmissionForm = () => {
     // Track when users go back
     ReactGA.event('step_back', {
       form_name: 'salary_submission',
-      from_step: step
+      step: `Step ${step}`
     });
     setStep(step - 1);
   };
