@@ -1092,8 +1092,10 @@ const SalaryDrDashboard = () => {
     const formatInputCurrency = (value) => {
       // Remove all non-numeric characters
       const numericValue = value.replace(/[^0-9]/g, '');
-      // Convert to number and format
+      // Convert to number and format only if we have a value
+      if (!numericValue) return '';
       const number = parseInt(numericValue, 10);
+      if (isNaN(number)) return '';
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
@@ -1102,7 +1104,13 @@ const SalaryDrDashboard = () => {
     };
 
     const handleCompensationChange = (e) => {
-      const formattedValue = formatInputCurrency(e.target.value);
+      const value = e.target.value;
+      // If the value is empty or just a dollar sign, clear the input
+      if (!value || value === '$') {
+        setUserInput({ ...userInput, compensation: '' });
+        return;
+      }
+      const formattedValue = formatInputCurrency(value);
       setUserInput({ ...userInput, compensation: formattedValue });
     };
 
