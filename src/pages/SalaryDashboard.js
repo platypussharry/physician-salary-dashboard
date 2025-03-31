@@ -1555,7 +1555,7 @@ const SalaryDrDashboard = () => {
         <div className="lg:col-span-1">
           <div className="bg-white shadow-md rounded-lg p-6 mb-6">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-              <span style={{ color: '#2B67CC' }}>Salary</span>
+              <span style={{ color: '#2B67CC' }}>salary</span>
               <span style={{ color: '#E94F37' }}>Dr</span> Insights
             </h2>
 

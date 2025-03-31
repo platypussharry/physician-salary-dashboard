@@ -28,7 +28,7 @@ const Home = () => {
           <div className="flex justify-between items-center">
             <Link 
               to="/" 
-              className="text-[2.5rem] sm:text-[3rem] lg:text-[3.5rem] tracking-normal font-['Outfit'] flex-shrink-0"
+              className="text-[3rem] sm:text-[3.5rem] lg:text-[4rem] tracking-normal font-['Outfit'] flex-shrink-0"
             >
               <span className="text-[#4169E1] font-[400]">salary</span>
               <span className="text-[#E94E4A] font-[500]">Dr</span>
@@ -250,29 +250,6 @@ const Home = () => {
             >
               Share Your Salary
             </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="bg-white py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="text-blue-600 text-4xl mb-4">🔒</div>
-              <h3 className="text-xl font-semibold mb-2">100% Anonymous</h3>
-              <p className="text-gray-600">Your identity is always protected. Share freely without concern.</p>
-            </div>
-            <div className="text-center p-6">
-              <div className="text-blue-600 text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold mb-2">Real-time Insights</h3>
-              <p className="text-gray-600">Access up-to-date salary data across specialties and locations.</p>
-            </div>
-            <div className="text-center p-6">
-              <div className="text-blue-600 text-4xl mb-4">💪</div>
-              <h3 className="text-xl font-semibold mb-2">Empower Decisions</h3>
-              <p className="text-gray-600">Make informed career choices with comprehensive salary data.</p>
-            </div>
           </div>
         </div>
       </div>
