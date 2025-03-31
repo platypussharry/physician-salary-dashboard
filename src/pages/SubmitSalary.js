@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link } from 'react-router-dom';
+import ReactGA from 'react-ga4';
 import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
@@ -106,6 +107,15 @@ const SalarySubmissionForm = () => {
     'Washington': 'West'
   };
 
+  // Track form start when component mounts
+  useEffect(() => {
+    ReactGA.event({
+      category: 'Salary Form',
+      action: 'Form Start',
+      label: 'Step 1'
+    });
+  }, []);
+
   const handleNext = (e) => {
     e.preventDefault();
     
@@ -123,11 +133,26 @@ const SalarySubmissionForm = () => {
       }
     }
     
+    // Track successful step completion
+    ReactGA.event({
+      category: 'Salary Form',
+      action: 'Step Complete',
+      label: `Step ${step}`,
+      value: step
+    });
+    
     setStep(step + 1);
   };
 
   const handleBack = (e) => {
     e.preventDefault();
+    // Track when users go back
+    ReactGA.event({
+      category: 'Salary Form',
+      action: 'Step Back',
+      label: `From Step ${step}`,
+      value: step
+    });
     setStep(step - 1);
   };
 
@@ -214,73 +239,73 @@ const SalarySubmissionForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate fields before submitting
-    if (!validateSalaryFields()) {
-      return;
-    }
-    
     setIsSubmitting(true);
-    
-    try {
-      // Parse the numbers before submitting
-      const baseSalary = parseFloat(parseNumber(formData.baseSalary));
-      const bonusIncentives = parseFloat(parseNumber(formData.bonusIncentives));
-      const totalComp = formData.totalCompensation || (baseSalary + bonusIncentives);
 
-      // Set geographic location as city and state
-      const geographic_location = formData.location.city 
-        ? `${formData.location.city}, ${formData.location.state}`
-        : formData.location.state;
+    // Track submission attempt
+    ReactGA.event({
+      category: 'Salary Form',
+      action: 'Submit Attempt',
+      label: 'Final Step'
+    });
+
+    try {
+      // Calculate total compensation
+      const baseNum = parseFloat(parseNumber(formData.baseSalary)) || 0;
+      const bonusNum = parseFloat(parseNumber(formData.bonusIncentives)) || 0;
+      const totalComp = baseNum + bonusNum;
 
       const { data, error } = await supabase
         .from('salary_submissions')
-        .insert([{
-          specialty: formData.specialty,
-          subspecialty: formData.subspecialty,
-          years_of_experience: parseInt(formData.yearsOfExperience),
-          city: formData.location.city,
-          state: formData.location.state,
-          geographic_location,
-          practice_setting: formData.practiceType,
-          total_compensation: totalComp,
-          base_salary: baseSalary,
-          bonus_incentives: bonusIncentives,
-          hours_worked: parseInt(formData.hoursWorkedPerWeek),
-          call_schedule: formData.callSchedule,
-          satisfaction_level: parseInt(formData.satisfactionLevel),
-          choosespecialty: formData.wouldChooseAgain === 'yes',
-          email: formData.email,
-          created_date: new Date().toISOString(),
-          submission_date: new Date().toISOString(),
-          role_title: "Attending Physician"
-        }]);
+        .insert([
+          {
+            specialty: formData.specialty,
+            subspecialty: formData.subspecialty || null,
+            years_of_experience: formData.yearsOfExperience,
+            city: formData.location.city,
+            state: formData.location.state,
+            region: formData.location.region,
+            practice_type: formData.practiceType,
+            total_compensation: totalComp,
+            base_salary: baseNum,
+            bonus_incentives: bonusNum,
+            hours_worked_per_week: parseInt(formData.hoursWorkedPerWeek),
+            call_schedule: formData.callSchedule,
+            satisfaction_level: formData.satisfactionLevel,
+            would_choose_again: formData.wouldChooseAgain === 'yes',
+            email: formData.email || null
+          }
+        ]);
 
-      if (error) throw error;
-      
-      setSubmitStatus('success');
-      // Reset form data
-      setFormData({
-        specialty: '',
-        subspecialty: '',
-        yearsOfExperience: 1,
-        location: { city: '', state: '', region: '' },
-        practiceType: '',
-        totalCompensation: '',
-        baseSalary: '',
-        bonusIncentives: '',
-        hoursWorkedPerWeek: '',
-        callSchedule: '',
-        satisfactionLevel: 3,
-        wouldChooseAgain: '',
-        email: ''
-      });
+      if (error) {
+        console.error('Error:', error);
+        setSubmitStatus('error');
+        // Track submission error
+        ReactGA.event({
+          category: 'Salary Form',
+          action: 'Submit Error',
+          label: error.message
+        });
+      } else {
+        setSubmitStatus('success');
+        // Track successful submission
+        ReactGA.event({
+          category: 'Salary Form',
+          action: 'Submit Success',
+          label: formData.specialty
+        });
+      }
     } catch (error) {
+      console.error('Error:', error);
       setSubmitStatus('error');
-      console.error('Error submitting salary:', error);
-    } finally {
-      setIsSubmitting(false);
+      // Track submission error
+      ReactGA.event({
+        category: 'Salary Form',
+        action: 'Submit Error',
+        label: 'Exception'
+      });
     }
+
+    setIsSubmitting(false);
   };
 
   const regionOptions = [

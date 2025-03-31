@@ -1,5 +1,6 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import ReactGA from 'react-ga4';
 import './App.css';
 import SalaryDashboard from './pages/SalaryDashboard';
 import SubmitSalary from './pages/SubmitSalary';
@@ -9,9 +10,24 @@ import Home from './pages/Home';
 import TakeHomePayCalculator from './pages/TakeHomePayCalculator';
 import AllSalaries from './pages/AllSalaries';
 
+// Initialize GA4
+ReactGA.initialize('G-642YJXJWZS');
+
+// Route tracking component
+function RouteTracker() {
+  const location = useLocation();
+  
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: location.pathname });
+  }, [location]);
+
+  return null;
+}
+
 function App() {
   return (
     <Router>
+      <RouteTracker />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<SalaryDashboard />} />
