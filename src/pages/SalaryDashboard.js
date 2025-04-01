@@ -1,8 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import '@fontsource/outfit/400.css';
-import '@fontsource/outfit/500.css';
-import '@fontsource/outfit/600.css';
+import { Helmet } from 'react-helmet';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '../supabaseClient';
 import { PRACTICE_TYPES, REGIONS } from '../types';
@@ -12,7 +10,7 @@ import { formatCurrency, formatDate, formatPostedDate } from '../utils/formatter
 import { calculateSalaryStats } from '../utils/salaryCalculations';
 import { processSubmissionData } from '../utils/dataProcessing';
 
-// Lazy load chart components
+// Lazy load chart components with loading fallback
 const SalaryChart = lazy(() => import('../components/charts/SalaryChart'));
 const ComparisonChart = lazy(() => import('../components/charts/ComparisonChart'));
 
@@ -1001,6 +999,15 @@ const SalaryDrDashboard = () => {
     
       return (
         <div className="bg-blue-50 min-h-screen p-4">
+          <Helmet>
+            <title>Physician Salary Data & Compensation Insights | SalaryDr</title>
+            <meta name="description" content="Explore real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information." />
+            <link rel="canonical" href="https://www.salarydr.com/dashboard" />
+            <meta property="og:title" content="Physician Salary Data & Compensation Insights | SalaryDr" />
+            <meta property="og:description" content="Explore real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information." />
+            <meta property="og:url" content="https://www.salarydr.com/dashboard" />
+          </Helmet>
+
           {/* Header with Logo */}
           <header className="max-w-7xl mx-auto mb-6">
             <div className="flex justify-between items-center mb-2">
@@ -1108,18 +1115,24 @@ const SalaryDrDashboard = () => {
               </div>
     
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
+                <Suspense fallback={<div className="h-full flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>}>
                   <SalaryChart 
                     data={salaryDistribution}
                     formatCurrency={formatCurrency}
                   />
-                </ResponsiveContainer>
+                </Suspense>
               </div>
               <div className="mt-8 pt-6 border-t border-gray-200">
-                <ComparisonChart 
-                  data={comparisonData}
-                  formatCurrency={formatCurrency}
-                />
+                <Suspense fallback={<div className="h-full flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>}>
+                  <ComparisonChart 
+                    data={comparisonData}
+                    formatCurrency={formatCurrency}
+                  />
+                </Suspense>
               </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200">

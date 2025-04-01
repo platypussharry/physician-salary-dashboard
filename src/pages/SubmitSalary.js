@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import ReactGA from 'react-ga4';
 import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
@@ -456,6 +457,15 @@ const SalarySubmissionForm = () => {
 
   return (
     <div className="min-h-screen bg-blue-50">
+      <Helmet>
+        <title>Submit Your Physician Salary | SalaryDr</title>
+        <meta name="description" content="Contribute to physician salary transparency by sharing your compensation data. Your anonymous submission helps fellow doctors make informed career decisions." />
+        <link rel="canonical" href="https://www.salarydr.com/submit-salary" />
+        <meta property="og:title" content="Submit Your Physician Salary | SalaryDr" />
+        <meta property="og:description" content="Contribute to physician salary transparency by sharing your compensation data. Your anonymous submission helps fellow doctors make informed career decisions." />
+        <meta property="og:url" content="https://www.salarydr.com/submit-salary" />
+      </Helmet>
+
       {/* Navigation */}
       <nav className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

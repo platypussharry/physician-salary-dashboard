@@ -4,37 +4,52 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#4169E1" />
-    <meta
-      name="description"
-      content="Access real physician salary data across 30+ medical specialties. Compare compensation, view market rates, and make informed career decisions with anonymous salary insights."
-    />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="description" content="SalaryDr - Physician salary transparency and compensation data. Compare physician salaries, explore take-home pay, and contribute to salary transparency in healthcare." />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <!-- Preconnect to Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Open Graph / Social Media Meta Tags -->
-    <meta property="og:title" content="SalaryDr - Physician Salary Transparency" />
-    <meta property="og:description" content="Access real physician salary data across 30+ medical specialties. Compare compensation and make informed career decisions." />
-    <meta property="og:image" content="https://www.salarydr.com/og-image.jpg" />
-    <meta property="og:url" content="https://www.salarydr.com" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <!-- Preload critical fonts -->
+    <link rel="preload" href="%PUBLIC_URL%/fonts/outfit-v6-latin-regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="%PUBLIC_URL%/fonts/outfit-v6-latin-500.woff2" as="font" type="font/woff2" crossorigin />
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Critical CSS -->
+    <style>
+      /* Include contents of critical.css here */
+      @font-face {
+        font-family: 'Outfit';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url('%PUBLIC_URL%/fonts/outfit-v6-latin-regular.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Outfit';
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+        src: url('%PUBLIC_URL%/fonts/outfit-v6-latin-500.woff2') format('woff2');
+      }
+    </style>
+    
+    <!-- Deferred Google Analytics -->
+    <script>
+      window.addEventListener('load', function() {
+        const script = document.createElement('script');
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-642YJXJWZS';
+        script.async = true;
+        document.body.appendChild(script);
+        
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-642YJXJWZS');
+      });
+    </script>
     
     <title>SalaryDr - Physician Salary Transparency and Compensation Data</title>
   </head>
@@ -51,24 +66,5 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
-
-    <!-- Google Analytics - Deferred loading -->
-    <script>
-      window.addEventListener('load', function() {
-        // Create script element for GA
-        var gaScript = document.createElement('script');
-        gaScript.async = true;
-        gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-642YJXJWZS';
-        document.body.appendChild(gaScript);
-
-        // Initialize GA
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-642YJXJWZS', {
-          send_page_view: false // We'll send page views manually for better control
-        });
-      });
-    </script>
   </body>
 </html>

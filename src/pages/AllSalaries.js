@@ -165,15 +165,12 @@ const AllSalaries = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Helmet>
-        <title>All Physician Salaries | SalaryDr</title>
-        <meta name="description" content="Browse comprehensive physician salary data across specialties, locations, and practice types. View detailed compensation information for doctors in hospital, private practice, and academic settings." />
-        <meta name="keywords" content="physician salaries, doctor compensation, medical salaries, healthcare compensation, physician pay, doctor salary data, medical compensation data" />
+        <title>All Physician Salary Submissions | SalaryDr</title>
+        <meta name="description" content="Browse all physician salary submissions. View detailed compensation data across specialties, locations, and practice types to understand the complete picture of physician pay." />
         <link rel="canonical" href="https://www.salarydr.com/all-salaries" />
-        <meta property="og:title" content="All Physician Salaries | SalaryDr" />
-        <meta property="og:description" content="Browse comprehensive physician salary data across specialties, locations, and practice types. View detailed compensation information for doctors." />
+        <meta property="og:title" content="All Physician Salary Submissions | SalaryDr" />
+        <meta property="og:description" content="Browse all physician salary submissions. View detailed compensation data across specialties, locations, and practice types to understand the complete picture of physician pay." />
         <meta property="og:url" content="https://www.salarydr.com/all-salaries" />
-        <meta name="twitter:title" content="All Physician Salaries | SalaryDr" />
-        <meta name="twitter:description" content="Browse comprehensive physician salary data across specialties, locations, and practice types." />
       </Helmet>
 
       {/* Navigation */}
@@ -194,6 +191,9 @@ const AllSalaries = () => {
             </Link>
             <Link to="/calculator" className="text-lg lg:text-xl font-semibold text-[#2D3748] whitespace-nowrap hover:text-blue-600 transition-colors">
               Take Home Pay Calculator
+            </Link>
+            <Link to="/feedback" className="text-lg lg:text-xl font-semibold text-[#2D3748] whitespace-nowrap hover:text-blue-600 transition-colors">
+              Feedback
             </Link>
             <Link
               to="/submit-salary"
@@ -244,6 +244,13 @@ const AllSalaries = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Take Home Pay Calculator
+              </Link>
+              <Link 
+                to="/feedback" 
+                className="text-lg font-semibold text-[#2D3748] hover:text-blue-600"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Feedback
               </Link>
               <Link
                 to="/submit-salary"

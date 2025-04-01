@@ -1,6 +1,14 @@
 import React from 'react';
 
 const ComparisonChart = ({ data, formatCurrency }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-gray-500">No comparison data available</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <h2 className="text-xl font-semibold text-gray-900 mb-4">Comparison by Employment Type</h2>
