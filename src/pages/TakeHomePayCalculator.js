@@ -277,11 +277,55 @@ const TakeHomePayCalculator = () => {
         <meta name="description" content="Calculate your physician take-home pay after taxes and deductions. Free calculator for doctors to estimate net income, tax burden, and monthly/bi-weekly pay." />
         <meta name="keywords" content="physician salary calculator, doctor take home pay, medical income calculator, physician tax calculator, doctor salary after taxes" />
         <link rel="canonical" href="https://www.salarydr.com/calculator" />
+        
+        {/* Open Graph tags for social sharing */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="SalaryDr" />
         <meta property="og:title" content="Physician Take-Home Pay Calculator | SalaryDr" />
         <meta property="og:description" content="Calculate your physician take-home pay after taxes and deductions. Free calculator for doctors to estimate net income, tax burden, and monthly/bi-weekly pay." />
         <meta property="og:url" content="https://www.salarydr.com/calculator" />
+        <meta property="og:image" content="https://www.salarydr.com/images/calculator-preview.jpg" />
+        
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@salarydr" />
         <meta name="twitter:title" content="Physician Take-Home Pay Calculator | SalaryDr" />
         <meta name="twitter:description" content="Calculate your physician take-home pay after taxes and deductions. Free calculator for doctors to estimate net income, tax burden, and monthly/bi-weekly pay." />
+        <meta name="twitter:image" content="https://www.salarydr.com/images/calculator-preview.jpg" />
+        
+        {/* Additional SEO meta tags */}
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="SalaryDr" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        
+        {/* JSON-LD structured data for rich snippets */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "Physician Take-Home Pay Calculator",
+              "description": "Calculate your physician take-home pay after taxes and deductions. Free calculator for doctors to estimate net income, tax burden, and monthly/bi-weekly pay.",
+              "url": "https://www.salarydr.com/calculator",
+              "applicationCategory": "FinanceApplication",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              "provider": {
+                "@type": "Organization",
+                "name": "SalaryDr",
+                "url": "https://www.salarydr.com",
+                "sameAs": [
+                  "https://twitter.com/salarydr",
+                  "https://www.instagram.com/salarydr_/",
+                  "https://www.tiktok.com/@salarydr"
+                ]
+              }
+            }
+          `}
+        </script>
       </Helmet>
 
       {/* Navigation */}

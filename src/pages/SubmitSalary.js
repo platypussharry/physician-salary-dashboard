@@ -460,10 +460,65 @@ const SalarySubmissionForm = () => {
       <Helmet>
         <title>Submit Your Physician Salary | SalaryDr</title>
         <meta name="description" content="Contribute to physician salary transparency by sharing your compensation data. Your anonymous submission helps fellow doctors make informed career decisions." />
+        <meta name="keywords" content="physician salary submission, doctor compensation data, medical salary survey, anonymous salary sharing, physician compensation transparency" />
         <link rel="canonical" href="https://www.salarydr.com/submit-salary" />
+        
+        {/* Open Graph tags for social sharing */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="SalaryDr" />
         <meta property="og:title" content="Submit Your Physician Salary | SalaryDr" />
         <meta property="og:description" content="Contribute to physician salary transparency by sharing your compensation data. Your anonymous submission helps fellow doctors make informed career decisions." />
         <meta property="og:url" content="https://www.salarydr.com/submit-salary" />
+        <meta property="og:image" content="https://www.salarydr.com/images/submit-preview.jpg" />
+        
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@salarydr" />
+        <meta name="twitter:title" content="Submit Your Physician Salary | SalaryDr" />
+        <meta name="twitter:description" content="Contribute to physician salary transparency by sharing your compensation data. Your anonymous submission helps fellow doctors make informed career decisions." />
+        <meta name="twitter:image" content="https://www.salarydr.com/images/submit-preview.jpg" />
+        
+        {/* Additional SEO meta tags */}
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="SalaryDr" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        
+        {/* JSON-LD structured data for rich snippets */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "WebPage",
+              "name": "Submit Your Physician Salary",
+              "description": "Contribute to physician salary transparency by sharing your compensation data. Your anonymous submission helps fellow doctors make informed career decisions.",
+              "url": "https://www.salarydr.com/submit-salary",
+              "provider": {
+                "@type": "Organization",
+                "name": "SalaryDr",
+                "url": "https://www.salarydr.com",
+                "sameAs": [
+                  "https://twitter.com/salarydr",
+                  "https://www.instagram.com/salarydr_/",
+                  "https://www.tiktok.com/@salarydr"
+                ]
+              },
+              "about": {
+                "@type": "Thing",
+                "name": "Physician Salary Submission",
+                "description": "Anonymous salary submission form for physicians to share their compensation data and contribute to salary transparency in healthcare."
+              },
+              "audience": {
+                "@type": "Audience",
+                "audienceType": "Physicians"
+              },
+              "mainEntity": {
+                "@type": "DataFeedItem",
+                "name": "Physician Salary Submission Form",
+                "description": "Secure form for submitting anonymous physician salary data"
+              }
+            }
+          `}
+        </script>
       </Helmet>
 
       {/* Navigation */}

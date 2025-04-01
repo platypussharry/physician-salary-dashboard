@@ -99,9 +99,14 @@ export const processSubmissionData = (data) => {
       submissionDate: item.submissionDate
     }));
 
+  // Calculate satisfaction percentage from wouldChooseAgain
+  const wouldChooseAgainCount = data.filter(item => item.wouldChooseAgain === true || item.wouldChooseAgain === 'yes').length;
+  const satisfactionPercentage = Math.round((wouldChooseAgainCount / data.length) * 100);
+
   return {
     aggregatedStats: {
       ...aggregatedStats,
+      satisfactionPercentage,
       updateDate: new Date().toLocaleDateString()
     },
     salaryDistribution,

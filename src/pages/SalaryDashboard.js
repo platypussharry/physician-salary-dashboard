@@ -419,7 +419,7 @@ const SalaryDrDashboard = () => {
             })(),
             employerType: normalizedPracticeSetting,
             bonusIncentives: parseCurrency(item.bonus_incentives) || 0,
-            wouldChooseAgain: item.choosespecialty === true,
+            wouldChooseAgain: item.choosespecialty === true || item.choosespecialty === 'yes',
             submissionDate: item.created_date || new Date().toISOString(),
             yearsOfExperience: Number(item.years_of_experience) || 0,
             hoursWorkedPerWeek: Number(item.hours_worked) || 40,
@@ -1001,11 +1001,69 @@ const SalaryDrDashboard = () => {
         <div className="bg-blue-50 min-h-screen p-4">
           <Helmet>
             <title>Physician Salary Data & Compensation Insights | SalaryDr</title>
-            <meta name="description" content="Explore real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information." />
+            <meta name="description" content="Access real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information from 5,000+ physicians." />
+            <meta name="keywords" content="physician salary, doctor compensation, medical specialties pay, physician salary comparison, doctor salary data" />
             <link rel="canonical" href="https://www.salarydr.com/dashboard" />
+            
+            {/* Open Graph tags for social sharing */}
+            <meta property="og:type" content="website" />
+            <meta property="og:site_name" content="SalaryDr" />
             <meta property="og:title" content="Physician Salary Data & Compensation Insights | SalaryDr" />
-            <meta property="og:description" content="Explore real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information." />
-            <meta property="og:url" content="https://www.salarydr.com/dashboard" />
+            <meta property="og:description" content="Access real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information from 5,000+ physicians." />
+            <meta property="og:url" content="https://www.marithealth.com/dashboard" />
+            <meta property="og:image" content="https://www.marithealth.com/images/dashboard-preview.jpg" />
+            
+            {/* Twitter Card tags */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:site" content="@salarydr" />
+            <meta name="twitter:title" content="Physician Salary Data & Compensation Insights | SalaryDr" />
+            <meta name="twitter:description" content="Access real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information from 5,000+ physicians." />
+            <meta name="twitter:image" content="https://www.marithealth.com/images/dashboard-preview.jpg" />
+            
+            {/* Additional SEO meta tags */}
+            <meta name="robots" content="index, follow" />
+            <meta name="author" content="SalaryDr" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            
+            {/* JSON-LD structured data for rich snippets */}
+            <script type="application/ld+json">
+              {`
+                {
+                  "@context": "https://schema.org",
+                  "@type": "WebPage",
+                  "name": "Physician Salary Data & Compensation Insights",
+                  "description": "Access real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information from 5,000+ physicians.",
+                  "url": "https://www.marithealth.com/dashboard",
+                  "provider": {
+                    "@type": "Organization",
+                    "name": "SalaryDr",
+                    "url": "https://www.marithealth.com",
+                    "sameAs": [
+                      "https://twitter.com/salarydr"
+                    ]
+                  },
+                  "about": {
+                    "@type": "Thing",
+                    "name": "Physician Salary Data",
+                    "description": "Comprehensive salary data and compensation insights for physicians across different specialties, locations, and practice types."
+                  },
+                  "audience": {
+                    "@type": "Audience",
+                    "audienceType": "Physicians"
+                  },
+                  "mainEntity": {
+                    "@type": "Dataset",
+                    "name": "Physician Salary Database",
+                    "description": "Anonymous, community-powered salary sharing database for physicians and APPs",
+                    "keywords": "physician salary, doctor compensation, medical specialties pay, physician salary comparison",
+                    "creator": {
+                      "@type": "Organization",
+                      "name": "SalaryDr"
+                    }
+                  }
+                }
+              `}
+            </script>
           </Helmet>
 
           {/* Header with Logo */}
