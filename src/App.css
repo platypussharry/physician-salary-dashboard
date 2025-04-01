@@ -1,3 +1,55 @@
+/* Critical styles */
+:root {
+  --primary-color: #3B82F6;
+  --secondary-color: #1E40AF;
+  --text-color: #1F2937;
+  --background-color: #FFFFFF;
+}
+
+/* Base styles */
+body {
+  margin: 0;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+/* Optimize paint and layout */
+.animate-spin {
+  will-change: transform;
+}
+
+/* Fonts loaded class */
+.fonts-loaded body {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Critical layout classes */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.text-center {
+  text-align: center;
+}
+
 .App {
   text-align: left;
   max-width: 1200px;

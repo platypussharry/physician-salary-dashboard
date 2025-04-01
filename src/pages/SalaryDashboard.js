@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
@@ -8,6 +8,13 @@ import { supabase } from '../supabaseClient';
 import { PRACTICE_TYPES, REGIONS } from '../types';
 import { STATES } from '../constants';
 import ReactGA from 'react-ga4';
+import { formatCurrency, formatDate, formatPostedDate } from '../utils/formatters';
+import { calculateSalaryStats } from '../utils/salaryCalculations';
+import { processSubmissionData } from '../utils/dataProcessing';
+
+// Lazy load chart components
+const SalaryChart = lazy(() => import('../components/charts/SalaryChart'));
+const ComparisonChart = lazy(() => import('../components/charts/ComparisonChart'));
 
 // Helper function to parse currency values
 const parseCurrency = (value) => {
@@ -278,312 +285,22 @@ const SalaryDrDashboard = () => {
     fetchData();
   }, [locationFilter, specialtyFilter, practiceType, currentPage]);
 
-  const processData = (items) => {
-    if (!items || items.length === 0) {
-      return;
-    }
+  // Memoize heavy calculations
+  const processData = React.useCallback((items) => {
+    if (!items?.length) return;
 
-    console.log('Processing data for items:', items.length);
+    const {
+      aggregatedStats: newStats,
+      salaryDistribution: newDist,
+      comparisonData: newComp,
+      recentSubmissions: newSubs
+    } = processSubmissionData(items);
 
-    // Filter items based on current filters
-    const filteredItems = items.filter(item => {
-      if (specialtyFilter !== 'All Physicians') {
-        // Check if the specialty filter includes a subspecialty
-        if (specialtyFilter.includes(' - ')) {
-          const [specialty, subspecialty] = specialtyFilter.split(' - ');
-          return item.specialty?.toLowerCase() === specialty.toLowerCase() && 
-                 item.subspecialty?.toLowerCase() === subspecialty.toLowerCase();
-        } else {
-          return item.specialty?.toLowerCase() === specialtyFilter.toLowerCase();
-        }
-      }
-      if (locationFilter !== 'All Regions') {
-        const itemState = item.state;
-        const itemRegion = item.geographicLocation;
-        return itemRegion === locationFilter || STATE_TO_REGION[itemState] === locationFilter;
-      }
-      if (practiceType !== 'All Practice Types') {
-        const practiceSetting = (item.practice_setting || '').toLowerCase().trim();
-        if (practiceType === 'Hospital Employed') {
-          return practiceSetting.includes('hospital') || 
-                 practiceSetting.includes('employed') || 
-                 practiceSetting === 'hospital employed' || 
-                 practiceSetting === 'hospital-employed';
-        } else if (practiceType === 'Academic') {
-          return practiceSetting.includes('academic');
-        } else if (practiceType === 'Private Practice') {
-          return practiceSetting.includes('private');
-        }
-      }
-      return true;
-    });
-
-    console.log('Filtered items:', filteredItems.length);
-
-    const validCompItems = filteredItems.filter(item => {
-      return item.totalCompensation > 0;
-    });
-
-    console.log('Valid compensation items:', validCompItems.length);
-
-    let avgTotalComp = 0;
-    if (validCompItems.length > 0) {
-      const totalComp = validCompItems.reduce((sum, item) => {
-        return sum + item.totalCompensation;
-      }, 0);
-
-      avgTotalComp = Math.round(totalComp / validCompItems.length);
-    }
-
-    // Count physicians who would choose their specialty again
-    const wouldChooseAgainCount = filteredItems.filter(item => item.wouldChooseAgain === true).length;
-    console.log('Would choose again count:', wouldChooseAgainCount, 'out of', filteredItems.length);
-    const calculatedSatisfactionPercentage = filteredItems.length > 0 ? Math.round((wouldChooseAgainCount / filteredItems.length) * 100) : 0;
-
-    let totalBase = 0;
-    let totalBonuses = 0;
-    let totalOther = 0;
-    let baseCount = 0;
-    let bonusCount = 0;
-    let otherCount = 0;
-    let workloadTotal = 0;
-    let workloadCount = 0;
-
-    filteredItems.forEach(item => {
-      const baseSalary = item.baseSalary;
-      if (!isNaN(baseSalary) && baseSalary > 0) {
-        totalBase += baseSalary;
-        baseCount++;
-      }
-
-      const bonus = item.bonusIncentives;
-      if (!isNaN(bonus) && bonus > 0) {
-        totalBonuses += bonus;
-        bonusCount++;
-      }
-
-      const totalComp = item.totalCompensation;
-      if (!isNaN(totalComp) && totalComp > 0 && !isNaN(baseSalary) && !isNaN(bonus)) {
-        const otherIncome = totalComp - baseSalary - bonus;
-        if (otherIncome > 0) {
-          totalOther += otherIncome;
-          otherCount++;
-        }
-      }
-
-      const hours = Number(item.hoursWorkedPerWeek || 0);
-      if (!isNaN(hours) && hours > 0) {
-        workloadTotal += hours;
-        workloadCount++;
-      }
-    });
-
-    const compensationValues = validCompItems
-      .map(item => item.totalCompensation)
-      .filter(val => !isNaN(val) && val > 0)
-      .sort((a, b) => a - b);
-
-    const percentiles = [];
-    if (compensationValues.length > 0) {
-      const getPercentileValue = (percentile) => {
-        const index = Math.floor(compensationValues.length * percentile / 100);
-        return compensationValues[Math.min(index, compensationValues.length - 1)];
-      };
-
-      percentiles.push(
-        { name: 'p10th', value: getPercentileValue(10), label: `$${Math.round(getPercentileValue(10) / 1000)}K` },
-        { name: 'p25th', value: getPercentileValue(25), label: `$${Math.round(getPercentileValue(25) / 1000)}K` },
-        { name: 'p50th', value: getPercentileValue(50), label: `$${Math.round(getPercentileValue(50) / 1000)}K` },
-        { name: 'p75th', value: getPercentileValue(75), label: `$${Math.round(getPercentileValue(75) / 1000)}K` },
-        { name: 'p90th', value: getPercentileValue(90), label: `$${Math.round(getPercentileValue(90) / 1000)}K` }
-      );
-    }
-
-    setSalaryDistribution(percentiles);
-
-    // Update how we categorize items for comparison data
-    const academicItems = validCompItems.filter(item => {
-      const practiceSetting = (item.practice_setting || '').toLowerCase().trim();
-      return practiceSetting.includes('academic');
-    });
-
-    const hospitalItems = validCompItems.filter(item => {
-      const practiceSetting = (item.practice_setting || '').toLowerCase().trim();
-      return practiceSetting.includes('hospital') || 
-             practiceSetting.includes('employed') || 
-             practiceSetting === 'hospital employed' || 
-             practiceSetting === 'hospital-employed';
-    });
-
-    const privateItems = validCompItems.filter(item => {
-      const practiceSetting = (item.practice_setting || '').toLowerCase().trim();
-      return practiceSetting.includes('private');
-    });
-
-    // Remove the uncategorized items logic since we're being more inclusive with our filters
-    const comparisonData = [
-      {
-        type: 'Academic',
-        avgComp: calculateAverage(academicItems),
-        submissions: academicItems.length
-      },
-      {
-        type: 'Hospital Employed',
-        avgComp: calculateAverage(hospitalItems),
-        submissions: hospitalItems.length
-      },
-      {
-        type: 'Private Practice',
-        avgComp: calculateAverage(privateItems),
-        submissions: privateItems.length
-      }
-    ];
-
-    setComparisonData(comparisonData);
-
-    let sortedItems = [...filteredItems];
-    const itemsWithDates = sortedItems.filter(item => item.submissionDate);
-
-    // First filter by practice type if a specific type is selected
-    const practiceTypeFiltered = activeTab === 'overview' 
-      ? itemsWithDates 
-      : itemsWithDates.filter(submission => {
-          const employerType = submission.employerType?.toLowerCase() || '';
-          switch (activeTab) {
-            case 'academic':
-              return employerType === 'academic';
-            case 'hospital':
-              return employerType === 'hospital-employed';
-            case 'private':
-              return employerType === 'private practice';
-            default:
-              return true;
-          }
-        });
-
-    // If we have less than 3 submissions after filtering, get more from older dates
-    if (practiceTypeFiltered.length < 3) {
-      const olderSubmissions = filteredItems.filter(item => {
-        const employerType = item.employerType?.toLowerCase() || '';
-        switch (activeTab) {
-          case 'academic':
-            return employerType === 'academic';
-          case 'hospital':
-            return employerType === 'hospital-employed';
-          case 'private':
-            return employerType === 'private practice';
-          default:
-            return true;
-        }
-      });
-      sortedItems = olderSubmissions;
-    } else {
-      sortedItems = practiceTypeFiltered;
-    }
-
-    // Sort by date and take up to 10 items
-    sortedItems = sortedItems.sort((a, b) => {
-      const dateA = new Date(a.submissionDate || '2000-01-01');
-      const dateB = new Date(b.submissionDate || '2000-01-01');
-      return dateB - dateA;
-    }).slice(0, 10);
-
-    const recentSubmissions = sortedItems.map(item => {
-      if (!item) return null;  // Skip if item is undefined
-      
-      const totalComp = typeof item.totalCompensation === 'string'
-        ? Number(item.totalCompensation.replace(/[^0-9.-]+/g, ''))
-        : Number(item.totalCompensation || 0);
-
-      const bonusIncentives = typeof item.bonusIncentives === 'string'
-        ? Number(item.bonusIncentives.replace(/[^0-9.-]+/g, ''))
-        : Number(item.bonusIncentives || 0);
-
-      let timeAgo = 'Recently';
-      if (item.submissionDate) {
-        const now = new Date();
-        const past = new Date(item.submissionDate);
-        const diffMs = now - past;
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-        if (diffDays < 1) {
-          timeAgo = 'Today';
-        } else if (diffDays === 1) {
-          timeAgo = 'Yesterday';
-        } else if (diffDays < 7) {
-          timeAgo = `${diffDays}d ago`;
-        } else if (diffDays < 30) {
-          timeAgo = `${Math.floor(diffDays / 7)}w ago`;
-        } else {
-          timeAgo = `${Math.floor(diffDays / 30)}mo ago`;
-        }
-      }
-
-      // Generate a unique ID if none exists
-      const uniqueId = item.id || `temp-${Math.random().toString(36).substr(2, 9)}`;
-
-      return {
-        id: uniqueId,
-        timeAgo,
-        specialty: item.specialty || 'General',
-        subspecialty: item.subspecialty || '',
-        yearsOfExperience: item.yearsOfExperience || 0,
-        location: item.location || 'United States',
-        employer: item.employer || '',
-        employerType: item.practiceType || 'Unknown',
-        workload: `${item.hoursWorkedPerWeek || 40} hrs/week`,
-        pto: item.paidTimeOff || '4 wks',
-        compensation: totalComp,
-        productivity: item.productivityModel || 'Salary',
-        submissionDate: item.submissionDate || '',
-        satisfaction: item.satisfactionLevel || 0,
-        bonusIncentives: bonusIncentives,
-        wouldChooseAgain: item.wouldChooseAgain || false
-      };
-    }).filter(Boolean); // Remove any null entries
-
-    setRecentSubmissions(recentSubmissions);
-
-    const rvuValues = items
-      .map(item => Number(item.rvuValue || 0))
-      .filter(val => !isNaN(val) && val > 0);
-    
-    const rvuCount = items
-      .map(item => Number(item.rvuCount || 0))
-      .filter(val => !isNaN(val) && val > 0);
-
-    const avgRVU = rvuValues.length > 0
-      ? rvuValues.reduce((sum, val) => sum + val, 0) / rvuValues.length
-      : 0;
-
-    const avgRVUCount = rvuCount.length > 0
-      ? rvuCount.reduce((sum, val) => sum + val, 0) / rvuCount.length
-      : 0;
-
-    setAggregatedStats({
-      averageSalary: avgTotalComp,
-      totalSubmissions: validCompItems.length,
-      base: baseCount > 0 ? Math.round(totalBase / baseCount) : 0,
-      bonuses: bonusCount > 0 ? Math.round(totalBonuses / bonusCount) : 0,
-      bonusesPercentage: items.length > 0 ? Math.round((bonusCount / items.length) * 100) : 0,
-      otherIncome: otherCount > 0 ? Math.round(totalOther / otherCount) : 0,
-      otherIncomePercentage: items.length > 0 ? Math.round((otherCount / items.length) * 100) : 0,
-      workload: workloadCount > 0 ? Math.round(workloadTotal / workloadCount * 10) / 10 : 0,
-      satisfaction: calculatedSatisfactionPercentage,
-      satisfactionPercentage: calculatedSatisfactionPercentage,
-      updateDate: new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }),
-      avgRVU: Math.round(avgRVU * 100) / 100 || 0,
-      avgRVUCount: Math.round(avgRVUCount) || 0
-    });
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [locationFilter, specialtyFilter, practiceType, currentPage]);
+    setAggregatedStats(newStats);
+    setSalaryDistribution(newDist);
+    setComparisonData(newComp);
+    setRecentSubmissions(newSubs);
+  }, []);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -1392,63 +1109,18 @@ const SalaryDrDashboard = () => {
     
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
+                  <SalaryChart 
                     data={salaryDistribution}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                    barSize={60}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={(value) => value.substring(1)}
-                    />
-                    <YAxis
-                      domain={[0, 'dataMax + 100000']}
-                      tickFormatter={(value) => `$${value / 1000}K`}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      formatter={(value) => [`${formatCurrency(value)}`, 'Salary']}
-                      labelFormatter={(value) => {
-                        const percentileMap = {
-                          'p10th': '10th percentile',
-                          'p25th': '25th percentile',
-                          'p50th': 'Median (50th percentile)',
-                          'p75th': '75th percentile',
-                          'p90th': '90th percentile'
-                        };
-                        return percentileMap[value] || value;
-                      }}
-                    />
-                    <Bar
-                      dataKey="value"
-                      fill="#4f46e5"
-                      radius={[4, 4, 0, 0]}
-                      label={{
-                        position: 'top',
-                        formatter: (item) => item.label,
-                        fill: '#4B5563',
-                        fontSize: 12
-                      }}
-                    />
-                  </BarChart>
+                    formatCurrency={formatCurrency}
+                  />
                 </ResponsiveContainer>
               </div>
               <div className="mt-8 pt-6 border-t border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Comparison by Employment Type</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {comparisonData.map((item) => (
-                <div key={item.type} className="bg-blue-50 rounded-lg p-4 text-center">
-                  <div className="text-base sm:text-lg font-semibold text-indigo-900">{item.type}</div>
-                  <div className="text-xl sm:text-2xl font-bold text-gray-900 mt-2">{formatCurrency(item.avgComp)}</div>
-                  <div className="text-sm text-gray-500 mt-1">{item.submissions} submissions</div>
-                </div>
-              ))}
-            </div>
-          </div>
+                <ComparisonChart 
+                  data={comparisonData}
+                  formatCurrency={formatCurrency}
+                />
+              </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
@@ -2121,4 +1793,4 @@ const SalaryDrDashboard = () => {
   );
 };
 
-export default SalaryDrDashboard;
+export default React.memo(SalaryDrDashboard);

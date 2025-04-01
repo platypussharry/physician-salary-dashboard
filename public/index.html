@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#4169E1" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="Access real physician salary data across 30+ medical specialties. Compare compensation, view market rates, and make informed career decisions with anonymous salary insights."
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <!--
@@ -24,15 +24,19 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-642YJXJWZS"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-642YJXJWZS');
-    </script>
+    <!-- Preconnect to Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:title" content="SalaryDr - Physician Salary Transparency" />
+    <meta property="og:description" content="Access real physician salary data across 30+ medical specialties. Compare compensation and make informed career decisions." />
+    <meta property="og:image" content="https://www.salarydr.com/og-image.jpg" />
+    <meta property="og:url" content="https://www.salarydr.com" />
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <title>SalaryDr - Physician Salary Transparency and Compensation Data</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -47,5 +51,24 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+
+    <!-- Google Analytics - Deferred loading -->
+    <script>
+      window.addEventListener('load', function() {
+        // Create script element for GA
+        var gaScript = document.createElement('script');
+        gaScript.async = true;
+        gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-642YJXJWZS';
+        document.body.appendChild(gaScript);
+
+        // Initialize GA
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-642YJXJWZS', {
+          send_page_view: false // We'll send page views manually for better control
+        });
+      });
+    </script>
   </body>
 </html>

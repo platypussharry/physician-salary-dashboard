@@ -12,6 +12,7 @@
     "@testing-library/user-event": "^13.5.0",
     "@wix/data": "^1.0.213",
     "@wix/sdk": "^1.15.14",
+    "fontfaceobserver": "^2.3.0",
     "lodash": "^4.17.21",
     "next-sitemap": "^4.2.3",
     "react": "^18.2.0",
