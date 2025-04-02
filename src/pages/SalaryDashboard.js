@@ -209,6 +209,7 @@ const SalaryDrDashboard = () => {
   const [miniCalcIncome, setMiniCalcIncome] = useState('');
   const [miniCalcState, setMiniCalcState] = useState('Minnesota');
   const [miniCalcResults, setMiniCalcResults] = useState(null);
+  const [showHourly, setShowHourly] = useState(false);
 
   // Add formatTimeAgo function
   const formatTimeAgo = (date) => {
@@ -1000,67 +1001,74 @@ const SalaryDrDashboard = () => {
       return (
         <div className="bg-blue-50 min-h-screen p-4">
           <Helmet>
-            <title>Physician Salary Data & Compensation Insights | SalaryDr</title>
-            <meta name="description" content="Access real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information from 5,000+ physicians." />
-            <meta name="keywords" content="physician salary, doctor compensation, medical specialties pay, physician salary comparison, doctor salary data" />
+            <title>{specialtyFilter === 'All Physicians' ? 'Physician Salary Data | SalaryDr' : `${specialtyFilter} Salary Data | SalaryDr`}</title>
+            <meta name="description" content={`View detailed ${specialtyFilter === 'All Physicians' ? 'physician' : specialtyFilter.toLowerCase()} salary data${locationFilter !== 'All Regions' ? ` in ${locationFilter}` : ''}${practiceType !== 'All Practice Types' ? ` for ${practiceType}` : ''}. Access real compensation insights from ${aggregatedStats.totalSubmissions.toLocaleString()} physician submissions.`} />
             <link rel="canonical" href="https://www.salarydr.com/dashboard" />
-            
-            {/* Open Graph tags for social sharing */}
+
+            {/* Open Graph tags */}
             <meta property="og:type" content="website" />
             <meta property="og:site_name" content="SalaryDr" />
-            <meta property="og:title" content="Physician Salary Data & Compensation Insights | SalaryDr" />
-            <meta property="og:description" content="Access real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information from 5,000+ physicians." />
-            <meta property="og:url" content="https://www.marithealth.com/dashboard" />
-            <meta property="og:image" content="https://www.marithealth.com/images/dashboard-preview.jpg" />
-            
+            <meta property="og:title" content={specialtyFilter === 'All Physicians' ? 'Physician Salary Data | SalaryDr' : `${specialtyFilter} Salary Data | SalaryDr`} />
+            <meta property="og:description" content={`View detailed ${specialtyFilter === 'All Physicians' ? 'physician' : specialtyFilter.toLowerCase()} salary data${locationFilter !== 'All Regions' ? ` in ${locationFilter}` : ''}${practiceType !== 'All Practice Types' ? ` for ${practiceType}` : ''}. Access real compensation insights from ${aggregatedStats.totalSubmissions.toLocaleString()} physician submissions.`} />
+            <meta property="og:url" content="https://www.salarydr.com/dashboard" />
+            <meta property="og:image" content="https://www.salarydr.com/images/dashboard-preview.jpg" />
+
             {/* Twitter Card tags */}
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:site" content="@salarydr" />
-            <meta name="twitter:title" content="Physician Salary Data & Compensation Insights | SalaryDr" />
-            <meta name="twitter:description" content="Access real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information from 5,000+ physicians." />
-            <meta name="twitter:image" content="https://www.marithealth.com/images/dashboard-preview.jpg" />
-            
-            {/* Additional SEO meta tags */}
-            <meta name="robots" content="index, follow" />
-            <meta name="author" content="SalaryDr" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            
-            {/* JSON-LD structured data for rich snippets */}
+            <meta name="twitter:title" content={specialtyFilter === 'All Physicians' ? 'Physician Salary Data | SalaryDr' : `${specialtyFilter} Salary Data | SalaryDr`} />
+            <meta name="twitter:description" content={`View detailed ${specialtyFilter === 'All Physicians' ? 'physician' : specialtyFilter.toLowerCase()} salary data${locationFilter !== 'All Regions' ? ` in ${locationFilter}` : ''}${practiceType !== 'All Practice Types' ? ` for ${practiceType}` : ''}. Access real compensation insights from ${aggregatedStats.totalSubmissions.toLocaleString()} physician submissions.`} />
+            <meta name="twitter:image" content="https://www.salarydr.com/images/dashboard-preview.jpg" />
+
+            {/* JSON-LD structured data */}
             <script type="application/ld+json">
               {`
                 {
                   "@context": "https://schema.org",
                   "@type": "WebPage",
-                  "name": "Physician Salary Data & Compensation Insights",
-                  "description": "Access real physician salary data by specialty, location, and practice type. Compare compensation, analyze trends, and make informed career decisions with verified salary information from 5,000+ physicians.",
-                  "url": "https://www.marithealth.com/dashboard",
+                  "name": "${specialtyFilter === 'All Physicians' ? 'Physician Salary Data' : `${specialtyFilter} Salary Data`}",
+                  "description": "View detailed ${specialtyFilter === 'All Physicians' ? 'physician' : specialtyFilter.toLowerCase()} salary data${locationFilter !== 'All Regions' ? ` in ${locationFilter}` : ''}${practiceType !== 'All Practice Types' ? ` for ${practiceType}` : ''}.",
+                  "url": "https://www.salarydr.com/dashboard",
                   "provider": {
                     "@type": "Organization",
                     "name": "SalaryDr",
-                    "url": "https://www.marithealth.com",
+                    "url": "https://www.salarydr.com",
                     "sameAs": [
-                      "https://twitter.com/salarydr"
+                      "https://twitter.com/salarydr",
+                      "https://www.instagram.com/salarydr_/",
+                      "https://www.tiktok.com/@salarydr"
                     ]
-                  },
-                  "about": {
-                    "@type": "Thing",
-                    "name": "Physician Salary Data",
-                    "description": "Comprehensive salary data and compensation insights for physicians across different specialties, locations, and practice types."
-                  },
-                  "audience": {
-                    "@type": "Audience",
-                    "audienceType": "Physicians"
-                  },
-                  "mainEntity": {
-                    "@type": "Dataset",
-                    "name": "Physician Salary Database",
-                    "description": "Anonymous, community-powered salary sharing database for physicians and APPs",
-                    "keywords": "physician salary, doctor compensation, medical specialties pay, physician salary comparison",
-                    "creator": {
-                      "@type": "Organization",
-                      "name": "SalaryDr"
-                    }
                   }
+                }
+              `}
+            </script>
+
+            {/* Breadcrumb Schema */}
+            <script type="application/ld+json">
+              {`
+                {
+                  "@context": "https://schema.org",
+                  "@type": "BreadcrumbList",
+                  "itemListElement": [
+                    {
+                      "@type": "ListItem",
+                      "position": 1,
+                      "name": "Home",
+                      "item": "https://www.salarydr.com"
+                    },
+                    {
+                      "@type": "ListItem",
+                      "position": 2,
+                      "name": "Salary Data",
+                      "item": "https://www.salarydr.com/dashboard"
+                    }${specialtyFilter !== 'All Physicians' ? `,
+                    {
+                      "@type": "ListItem",
+                      "position": 3,
+                      "name": "${specialtyFilter}",
+                      "item": "https://www.salarydr.com/dashboard?specialty=${encodeURIComponent(specialtyFilter)}"
+                    }` : ''}
+                  ]
                 }
               `}
             </script>
@@ -1160,13 +1168,19 @@ const SalaryDrDashboard = () => {
             <div className="lg:col-span-2 bg-white shadow-md rounded-lg p-6">
             <div className="mb-4">
               <h2 className="text-2xl font-semibold text-gray-900 text-left mb-1">
-                  {specialtyFilter === 'All Physicians' ? 'Physician Salary' : `${specialtyFilter} Salary`} in {locationFilter}
-                  {practiceType !== 'All Practice Types' && ` (${practiceType})`}
-                </h2>
+                {specialtyFilter === 'All Physicians' ? 'Physician Salary' : `${specialtyFilter} Salary`} in {locationFilter}
+                {practiceType !== 'All Practice Types' && ` (${practiceType})`}
+              </h2>
               <div className="flex flex-col">
                 <div className="flex items-start">
-                  <span className="text-5xl font-bold text-gray-900">{formatCurrency(aggregatedStats.averageSalary)}</span>
-                  <span className="ml-3 text-sm text-gray-600 mt-2">Avg Total Comp ({aggregatedStats.totalSubmissions.toLocaleString()} Salaries)</span>
+                  <span className="text-5xl font-bold text-gray-900">
+                    {showHourly 
+                      ? `$${Math.round(aggregatedStats.averageSalary / (48 * 40))}/hr`
+                      : formatCurrency(aggregatedStats.averageSalary)}
+                  </span>
+                  <span className="ml-3 text-sm text-gray-600 mt-2">
+                    Avg Total Comp ({aggregatedStats.totalSubmissions.toLocaleString()} Salaries)
+                  </span>
                 </div>
                 <div className="text-sm text-gray-500 text-left mt-1">Updated {aggregatedStats.updateDate}</div>
               </div>
@@ -1176,10 +1190,20 @@ const SalaryDrDashboard = () => {
                 <Suspense fallback={<div className="h-full flex items-center justify-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                 </div>}>
-                  <SalaryChart 
-                    data={salaryDistribution}
-                    formatCurrency={formatCurrency}
-                  />
+                  <div className="relative h-full">
+                    <SalaryChart 
+                      data={salaryDistribution}
+                      formatCurrency={formatCurrency}
+                      showHourly={showHourly}
+                      setShowHourly={setShowHourly}
+                    />
+                    <button
+                      onClick={() => setShowHourly(!showHourly)}
+                      className="absolute bottom-0 right-8 text-sm text-indigo-600 hover:text-indigo-800 font-medium px-3 py-1 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                    >
+                      {showHourly ? 'Show Annual' : 'Show Hourly'}
+                    </button>
+                  </div>
                 </Suspense>
               </div>
               <div className="mt-8 pt-6 border-t border-gray-200">
@@ -1849,17 +1873,36 @@ const SalaryDrDashboard = () => {
                 viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
+              </svg>
             </div>
-                </button>
+          </button>
           {openFAQIndex === 5 && (
             <div className="px-6 pb-4 text-left">
               <p className="text-gray-600">You can reach us at <a href="mailto:thesalarydr@gmail.com" className="text-indigo-600 hover:text-indigo-800">thesalarydr@gmail.com</a></p>
-                </div>
+            </div>
           )}
           </div>
         </div>
       </div>
+
+      {/* Breadcrumb Navigation */}
+      <nav className="container mx-auto px-4 py-4 mb-4" aria-label="Breadcrumb">
+        <ol className="flex items-center space-x-2 text-sm">
+          <li>
+            <Link to="/" className="text-blue-600 hover:text-blue-800">Home</Link>
+          </li>
+          <li>
+            <span className="text-gray-500 mx-2">/</span>
+            <Link to="/dashboard" className="text-blue-600 hover:text-blue-800">Salary Data</Link>
+          </li>
+          {specialtyFilter !== 'All Physicians' && (
+            <li>
+              <span className="text-gray-500 mx-2">/</span>
+              <span className="text-gray-700">{specialtyFilter}</span>
+            </li>
+          )}
+        </ol>
+      </nav>
     </div>
   );
 };

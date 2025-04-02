@@ -6,6 +6,7 @@ import ReactGA from 'react-ga4';
 import '@fontsource/outfit/400.css';
 import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
+import TotalSubmissionsCount from '../components/TotalSubmissionsCount';
 
 const SalarySubmissionForm = () => {
   const [step, setStep] = useState(1);
@@ -27,7 +28,8 @@ const SalarySubmissionForm = () => {
     callSchedule: '',
     satisfactionLevel: 3,
     wouldChooseAgain: '',
-    email: ''
+    email: '',
+    pto: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -273,7 +275,8 @@ const SalarySubmissionForm = () => {
           email: formData.email,
           created_date: new Date().toISOString(),
           submission_date: new Date().toISOString(),
-          role_title: "Attending Physician"
+          role_title: "Attending Physician",
+          pto: formData.pto
         }]);
 
       if (error) {
@@ -312,7 +315,8 @@ const SalarySubmissionForm = () => {
         callSchedule: '',
         satisfactionLevel: 3,
         wouldChooseAgain: '',
-        email: ''
+        email: '',
+        pto: ''
       });
       setStep(1);
     } catch (error) {
@@ -592,7 +596,7 @@ const SalarySubmissionForm = () => {
               <span className="text-red-500">Dr</span>
             </div>
             <h1 className="text-xl md:text-2xl font-bold text-center text-gray-800">
-              Join <span className="text-blue-700">2,318</span> doctors and help improve salary transparency! 🚀
+              Join <span className="text-blue-700"><TotalSubmissionsCount /></span> doctors and help improve salary transparency! 🚀
             </h1>
             <div className="w-full bg-gray-100 rounded-lg p-4 my-4 flex items-center justify-center">
               <p className="text-gray-700">Your data is anonymous and secure. 
@@ -815,6 +819,23 @@ const SalarySubmissionForm = () => {
                   {errors.hoursWorkedPerWeek && (
                     <p className="mt-1 text-red-500 text-sm">{errors.hoursWorkedPerWeek}</p>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-lg font-medium text-blue-700 mb-2">
+                    Paid Time Off (PTO) in Weeks Per Year (Required)
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={formData.pto}
+                    onChange={(e) => setFormData({...formData, pto: e.target.value})}
+                    placeholder="Enter weeks of PTO"
+                    min="0"
+                    max="52"
+                    required
+                  />
+                  <p className="mt-1 text-sm text-gray-500">Include vacation, CME, and sick leave</p>
                 </div>
                 
                 <div>

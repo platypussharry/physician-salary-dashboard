@@ -166,11 +166,47 @@ const AllSalaries = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Helmet>
         <title>All Physician Salary Submissions | SalaryDr</title>
-        <meta name="description" content="Browse all physician salary submissions. View detailed compensation data across specialties, locations, and practice types to understand the complete picture of physician pay." />
-        <link rel="canonical" href="https://www.salarydr.com/all-salaries" />
+        <meta name="description" content={`Browse physician salary submissions${filters.specialty ? ` for ${filters.specialty}` : ''}${filters.practiceType ? ` in ${filters.practiceType}` : ''}. Page ${currentPage} of ${totalPages}.`} />
+        <link rel="canonical" href={`https://www.salarydr.com/all-salaries${currentPage > 1 ? `?page=${currentPage}` : ''}`} />
+        
+        {currentPage > 1 && <link rel="prev" href={`https://www.salarydr.com/all-salaries${currentPage > 2 ? `?page=${currentPage - 1}` : ''}`} />}
+        {currentPage < totalPages && <link rel="next" href={`https://www.salarydr.com/all-salaries?page=${currentPage + 1}`} />}
+        
         <meta property="og:title" content="All Physician Salary Submissions | SalaryDr" />
-        <meta property="og:description" content="Browse all physician salary submissions. View detailed compensation data across specialties, locations, and practice types to understand the complete picture of physician pay." />
-        <meta property="og:url" content="https://www.salarydr.com/all-salaries" />
+        <meta property="og:description" content={`Browse physician salary submissions${filters.specialty ? ` for ${filters.specialty}` : ''}${filters.practiceType ? ` in ${filters.practiceType}` : ''}. Page ${currentPage} of ${totalPages}.`} />
+        <meta property="og:url" content={`https://www.salarydr.com/all-salaries${currentPage > 1 ? `?page=${currentPage}` : ''}`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="SalaryDr" />
+
+        {/* JSON-LD for Breadcrumbs */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://www.salarydr.com"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "All Salaries",
+                  "item": "https://www.salarydr.com/all-salaries"
+                }${filters.specialty ? `,
+                {
+                  "@type": "ListItem",
+                  "position": 3,
+                  "name": "${filters.specialty}",
+                  "item": "https://www.salarydr.com/all-salaries?specialty=${encodeURIComponent(filters.specialty)}"
+                }` : ''}
+              ]
+            }
+          `}
+        </script>
       </Helmet>
 
       {/* Navigation */}
@@ -727,8 +763,27 @@ const AllSalaries = () => {
         </div>
       </main>
 
+      {/* Moved Breadcrumb Navigation */}
+      <nav className="container mx-auto px-4 py-4 mb-4" aria-label="Breadcrumb">
+        <ol className="flex items-center space-x-2 text-sm">
+          <li>
+            <Link to="/" className="text-blue-600 hover:text-blue-800">Home</Link>
+          </li>
+          <li>
+            <span className="text-gray-500 mx-2">/</span>
+            <Link to="/all-salaries" className="text-blue-600 hover:text-blue-800">All Salaries</Link>
+          </li>
+          {filters.specialty && (
+            <li>
+              <span className="text-gray-500 mx-2">/</span>
+              <span className="text-gray-700">{filters.specialty}</span>
+            </li>
+          )}
+        </ol>
+      </nav>
+
       {/* Footer */}
-      <footer className="bg-blue-50 py-12 mt-12">
+      <footer className="bg-blue-50 py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row gap-16">
             {/* Legal Links */}
