@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/physician-salary-data",
+      "destination": "/",
+      "permanent": true
+    }
+  ]
+} 
