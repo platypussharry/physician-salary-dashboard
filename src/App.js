@@ -15,6 +15,7 @@ const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 const TakeHomePayCalculator = lazy(() => import('./pages/TakeHomePayCalculator'));
 const AllSalaries = lazy(() => import('./pages/AllSalaries'));
 const Feedback = lazy(() => import('./pages/Feedback'));
+const DrLounge = lazy(() => import('./components/DrLounge/DrLoungeWaitlist'));
 
 // Initialize GA4
 ReactGA.initialize('G-642YJXJWZS');
@@ -64,6 +65,7 @@ function App() {
           <Route path="/calculator" element={<TakeHomePayCalculator />} />
           <Route path="/all-salaries" element={<AllSalaries />} />
           <Route path="/feedback" element={<Feedback />} />
+          <Route path="/lounge" element={<DrLounge />} />
         </Routes>
       </Suspense>
       <Analytics />
