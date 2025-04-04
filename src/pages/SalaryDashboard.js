@@ -1301,8 +1301,10 @@ const SalaryDrDashboard = () => {
                           <p className="text-sm text-gray-900">{formatCurrency(submission.bonusIncentives)}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-700">Would Choose Again:</p>
-                          <p className="text-sm text-gray-900">
+                          <p className="text-sm font-medium text-gray-700">
+                            Would Choose Again: <span className="sm:hidden text-gray-900">{submission.wouldChooseAgain === true ? 'Yes' : 'No'}</span>
+                          </p>
+                          <p className="hidden sm:block text-sm text-gray-900">
                             {submission.wouldChooseAgain === true ? 'Yes' : 'No'}
                           </p>
                         </div>
@@ -1399,8 +1401,10 @@ const SalaryDrDashboard = () => {
                                   <p className="text-sm text-gray-900">{formatCurrency(submission.bonusIncentives)}</p>
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-gray-700">Would Choose Again:</p>
-                                  <p className="text-sm text-gray-900">
+                                  <p className="text-sm font-medium text-gray-700">
+                                    Would Choose Again: <span className="sm:hidden text-gray-900">{submission.wouldChooseAgain === true ? 'Yes' : 'No'}</span>
+                                  </p>
+                                  <p className="hidden sm:block text-sm text-gray-900">
                                     {submission.wouldChooseAgain === true ? 'Yes' : 'No'}
                                   </p>
                                 </div>
